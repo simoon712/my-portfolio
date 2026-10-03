@@ -9,8 +9,8 @@ function ProjectList(props: ProjectListProps) {
   const projects = props.projects;
 
   return (
-    <section>
-      <h2>Project</h2>
+    <section id = "projects">
+      <h2>Projects</h2>
 
       {projects.map((project) => (
           <Project

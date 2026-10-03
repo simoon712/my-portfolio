@@ -9,7 +9,7 @@ function CareerList(props: CareerListProps) {
   const careers = props.careers;
 
   return (
-    <section>
+    <section id = "career">
       <h2>Career</h2>
 
       {careers.map((career) => (
