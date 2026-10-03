@@ -2,10 +2,11 @@ import Skills from './components/Skills';
 import type { CareerData } from './components/Career';
 import './App.css';
 import About from './components/About';
-import Projects from './components/Projects';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CareerList from './components/CareerList';
+import ProjectList from './components/ProjectList';
+import type { ProjectData } from './components/Project';
 
 const careers: CareerData[] = [
   {
@@ -24,6 +25,17 @@ const careers: CareerData[] = [
   }
 ];
 
+const projects: ProjectData[] = [
+  {
+    id: 1,
+    title: 'Simple 2D Editor',
+    description: 'A simple 2D drawing application built with React and TypeScript.',
+    technologies: ['TypeScript', 'React', 'HTML', 'CSS', 'Git'],
+    githubUrl: '',
+    demoUrl: ''
+  }
+];
+
 function App() {
   return (
     <>
@@ -36,7 +48,8 @@ function App() {
 
         <CareerList careers = {careers} />
 
-        <Projects />
+        <ProjectList projects = {projects} />
+
       </main>
 
       <Footer />
