@@ -19,9 +19,10 @@ function Header(props: HeaderProps) {
         <a href = "#projects">{props.isJapanese ? '制作物' : 'Projects'}</a>
       </nav>
       <button
+        className = "language-button"
         onClick = {() => props.setIsJapanese(!props.isJapanese)}
         >
-        {props.isJapanese ? 'EN' : 'JA'}
+        {props.isJapanese ? 'English' : '日本語'}
       </button>
     </header>
   );
