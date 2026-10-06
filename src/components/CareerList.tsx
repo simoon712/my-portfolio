@@ -3,6 +3,7 @@ import type { CareerData } from './Career';
 
 type CareerListProps = {
   careers: CareerData[];
+  isJapanese: boolean;
 };
 
 function CareerList(props: CareerListProps) {
@@ -10,12 +11,13 @@ function CareerList(props: CareerListProps) {
 
   return (
     <section id = "career">
-      <h2>Career</h2>
+      <h2>{props.isJapanese ? '経歴' : 'Career'}</h2>
 
       {careers.map((career) => (
           <Career
             key = {career.id}
             career = {career}
+            isJapanese = {props.isJapanese}
           />
       ))}
     </section>

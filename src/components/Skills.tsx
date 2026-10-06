@@ -1,5 +1,6 @@
 type SkillsProps = {
   skills: string[];
+  isJapanese: boolean;
 };
 
 function Skills(props: SkillsProps) {
@@ -10,7 +11,7 @@ function Skills(props: SkillsProps) {
       className = "skills"
       id = "skills"
     >
-      <h2>Skills</h2>
+      <h2>{props.isJapanese ? 'スキル' : 'Skills'}</h2>
       <ul className = "skill-list">
         {skills.map((skill) => {
           return (
