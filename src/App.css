@@ -104,6 +104,16 @@ h2 {
   gap: 8px;
 }
 
+/* 制作物の開閉ボタン */
+.details-button {
+  display: block;
+  margin: 16px auto 0;
+  padding: 5px 10px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
 /* Header */
 .header {
   position: relative;
