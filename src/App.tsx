@@ -8,6 +8,7 @@ import CareerList from './components/CareerList';
 import ProjectList from './components/ProjectList';
 import type { ProjectData } from './components/Project';
 import { useState } from "react";
+import Simple2DEditor from './components/Simple2DEditor';
 
 const careers: CareerData[] = [
   {
@@ -99,6 +100,7 @@ function App() {
           isJapanese = {isJapanese}
           projects = {projects}
         />
+        <Simple2DEditor />
       </main>
 
       <Footer />

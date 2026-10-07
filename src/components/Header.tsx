@@ -21,7 +21,7 @@ function Header(props: HeaderProps) {
       <button
         className = "language-button"
         onClick = {() => props.setIsJapanese(!props.isJapanese)}
-        >
+      >
         {props.isJapanese ? 'English' : '日本語'}
       </button>
     </header>
