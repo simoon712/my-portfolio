@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 
 type Rectangle = {
@@ -24,10 +24,16 @@ function Simple2DEditor() {
     y: 0
   });
 
+  // 選択中のアイテムID
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // 次に使用するアイテムID
+  const nextId = useRef<number>(1);
+
   // 新しいRectangleを作る
   function addRectangle() {
     const newRectangle: Rectangle = {
-      id: rectangles.length + 1,
+      id: nextId.current++,
       x: 50,
       y: 50,
     };
@@ -37,11 +43,14 @@ function Simple2DEditor() {
     ]);
   }
 
-  // アイテムのドラッグ開始
+  // アイテムをマウスダウンした時の処理
   function handleMouseDown(
     e: MouseEvent<HTMLDivElement>,
     rect: Rectangle
   ) {
+    // 選択したアイテムのIDを保存
+    setSelectedId(rect.id);
+
     // ドラッグするアイテムのIDを保存
     setDraggingId(rect.id);
 
@@ -82,6 +91,47 @@ function Simple2DEditor() {
     setDraggingId(null);
   }
 
+  // 描画エリアをマウスダウンした時の処理（選択解除）
+  function handleEditorMouseDown(e: MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget) {
+      setSelectedId(null);
+    }
+  }
+
+  // 選択したアイテムの削除
+  function deleteSelectedRectangle() {
+    // 選択中のIDと一致しないアイテムだけを残す
+    const newRectangles = rectangles.filter((rect) => {
+      return rect.id !== selectedId;
+    });
+
+    // 削除後の配列でstateを更新
+    setRectangles(newRectangles);
+
+    // 削除後は選択状態を解除
+    setSelectedId(null);
+  }
+
+  // キーボード操作を監視
+  useEffect(() => {
+    // キーが押された時の処理
+    function handleKeyDown(e: KeyboardEvent) {
+      // Deleteキーが押されたら選択中のアイテムを削除
+      if (e.key === 'Delete') deleteSelectedRectangle();
+    }
+
+    // windowにキーボードイベントを登録
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Effectが再実行・破棄される前にイベントを解除
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+
+    // 最新のrectanglesとselectedIdを使用するため
+    // どちらかが変わったらEffectを再実行
+  }, [rectangles, selectedId]);
+
   return (
     <>
       <h2>Simple 2D Editor</h2>
@@ -96,11 +146,12 @@ function Simple2DEditor() {
         className = "editor-area"
         onMouseMove = {handleMouseMove}
         onMouseUp = {handleMouseUp}
+        onMouseDown = {handleEditorMouseDown}
       >
         {rectangles.map((rect) => (
           <div
             key = {rect.id}
-            className = "rectangle"
+            className = {selectedId === rect.id ? "rectangle selected" : "rectangle"}
             style = {{
               left: rect.x,
               top: rect.y
