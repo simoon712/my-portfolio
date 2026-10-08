@@ -62,6 +62,17 @@ function Simple2DEditor() {
       x: e.clientX - rectangleRect.left,
       y: e.clientY - rectangleRect.top
     });
+
+    // 選択したアイテム以外を残す
+    const otherRectangles = rectangles.filter((item) => {
+      return item.id !== rect.id;
+    });
+
+    // 選択したアイテムを配列の最後に移動して最前面にする
+    setRectangles([
+      ...otherRectangles,
+      rect
+    ]);
   }
 
   // アイテムをドラッグ中に移動する
