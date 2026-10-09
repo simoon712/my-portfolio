@@ -5,18 +5,24 @@ type Rectangle = {
   id: number;
   x:  number;
   y:  number;
+  width: number;
+  height: number;
 };
 
 type DragOffset = {
   x: number;
   y: number;
 };
+
+// 現在の操作状態
+type EditorAction =
+  | { type: "none" }
+  | { type: "drag"; id: number }
+  | { type: "resize"; id: number };
+
 function Simple2DEditor() {
   // アイテムの状態
   const [rectangles, setRectangles] = useState<Rectangle[]>([]);
-
-  // ドラッグ中のアイテムID
-  const [draggingId, setDraggingId] = useState<number | null>(null);
 
   // アイテムを掴んだ位置
   const [dragOffset, setDragOffset] = useState<DragOffset>({
@@ -30,12 +36,19 @@ function Simple2DEditor() {
   // 次に使用するアイテムID
   const nextId = useRef<number>(1);
 
+  // 操作しているアイテムID
+  const [action, setAction] = useState<EditorAction>({
+    type: "none"
+  });
+
   // 新しいRectangleを作る
   function addRectangle() {
     const newRectangle: Rectangle = {
       id: nextId.current++,
       x: 50,
       y: 50,
+      width: 100,
+      height: 80,
     };
     setRectangles([
       ...rectangles,
@@ -52,7 +65,7 @@ function Simple2DEditor() {
     setSelectedId(rect.id);
 
     // ドラッグするアイテムのIDを保存
-    setDraggingId(rect.id);
+    setAction({ type: 'drag', id: rect.id });
 
     // アイテムのブラウザ上の位置を取得
     const rectangleRect = e.currentTarget.getBoundingClientRect();
@@ -75,31 +88,56 @@ function Simple2DEditor() {
     ]);
   }
 
-  // アイテムをドラッグ中に移動する
+  // アイテムをドラッグ・リサイズ中に更新する
   function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
-    // ドラッグ中でなければ何もしない
-    if (draggingId === null) return;
+    // ドラッグ・リサイズ中でなければ何もしない
+    if (action.type === 'none') return;
 
     // 描画エリアのブラウザ上の位置を取得
     const editorRect = e.currentTarget.getBoundingClientRect();
 
-    // ドラッグ中のアイテムだけ座標を更新
-    const newRectangles = rectangles.map((rect) => {
-      if (rect.id === draggingId) {
-        return {
-          ...rect,
-          x: e.clientX - editorRect.left - dragOffset.x,
-          y: e.clientY - editorRect.top - dragOffset.y,
-        };
+    let newRectangles: Rectangle[] = rectangles;
+
+    switch (action.type) {
+      // ドラッグ
+      case 'drag': {
+        newRectangles = rectangles.map((rect) => {
+          if (rect.id === action.id) {
+            return {
+              ...rect,
+              x: e.clientX - editorRect.left - dragOffset.x,
+              y: e.clientY - editorRect.top - dragOffset.y,
+            };
+          }
+          return rect;
+        });
+        break;
       }
-      return rect;
-    });
+
+      // リサイズ
+      case 'resize': {
+        newRectangles = rectangles.map((rect) => {
+          if (rect.id === action.id) {
+            return {
+              ...rect,
+              width: Math.max(20, e.clientX - editorRect.left - rect.x),
+              height: Math.max(20, e.clientY - editorRect.top - rect.y)
+            };
+          }
+          return rect;
+        });
+        break;
+      }
+    }
+
+    // 更新したRectangleをstateに反映
     setRectangles(newRectangles);
+
   }
 
-  // アイテムのドラッグ終了
+  // ドラッグ・リサイズ終了
   function handleMouseUp() {
-    setDraggingId(null);
+    setAction({ type: 'none' });
   }
 
   // 描画エリアをマウスダウンした時の処理（選択解除）
@@ -143,6 +181,37 @@ function Simple2DEditor() {
     // どちらかが変わったらEffectを再実行
   }, [rectangles, selectedId]);
 
+  // 描画エリア外をクリックした場合に選択解除する
+  useEffect(() => {
+    function handleWindowMouseDown(e: globalThis.MouseEvent) {
+      // 描画エリアを取得
+      const editor = document.querySelector(".editor-area");
+
+      // 描画エリア外をクリックした場合
+      if (editor && !editor.contains(e.target as Node)) {
+        setSelectedId(null);
+      }
+    }
+
+    window.addEventListener("mousedown", handleWindowMouseDown);
+
+    return () => {
+      window.removeEventListener("mousedown", handleWindowMouseDown);
+    };
+  }, []);
+
+  // リサイズ開始
+  function handleResizeMouseDown(
+    e: MouseEvent<HTMLDivElement>,
+    rect: Rectangle
+  ) {
+    // 親のRectangleにマウスイベントを伝えない
+    e.stopPropagation();
+
+    // リサイズするアイテムのIDを保存
+    setAction({ type: 'resize', id: rect.id });
+  }
+
   return (
     <>
       <h2>Simple 2D Editor</h2>
@@ -164,11 +233,20 @@ function Simple2DEditor() {
             key = {rect.id}
             className = {selectedId === rect.id ? "rectangle selected" : "rectangle"}
             style = {{
-              left: rect.x,
-              top: rect.y
+              left:   rect.x,
+              top:    rect.y,
+              width:  rect.width,
+              height: rect.height,
             }}
             onMouseDown = {(e) => handleMouseDown(e, rect)}
           >
+            {selectedId === rect.id && (
+              <div
+                className = "resize-handle"
+                onMouseDown = {(e) => handleResizeMouseDown(e, rect)}
+              >
+              </div>
+            )}
           </div>
         ))}
       </div>
