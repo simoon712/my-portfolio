@@ -44,7 +44,7 @@ const projects: ProjectData[] = [
     descriptionJa: 'ReactとTypeScriptを使って構築された、シンプルな2D描画アプリケーションです。',
     technologies: ['TypeScript', 'React', 'HTML', 'CSS', 'Git'],
     githubUrl: '',
-    projectUrl: '${import.meta.env.BASE_URL}#/editor'
+    projectUrl: '/my-portfolio/#/editor'
   },
   {
     id: 2,
