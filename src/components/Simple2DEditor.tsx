@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, WheelEvent } from "react";
 
 type Rectangle = {
   id: number;
@@ -20,15 +20,20 @@ type EditorAction =
   | { type: "drag"; id: number }
   | { type: "resize"; id: number };
 
+// SVGの表示範囲
+type ViewBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 function Simple2DEditor() {
   // アイテムの状態
   const [rectangles, setRectangles] = useState<Rectangle[]>([]);
 
   // アイテムを掴んだ位置
-  const [dragOffset, setDragOffset] = useState<DragOffset>({
-    x: 0,
-    y: 0
-  });
+  const [dragOffset, setDragOffset] = useState<DragOffset>({x: 0, y: 0});
 
   // 選択中のアイテムID
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -37,9 +42,10 @@ function Simple2DEditor() {
   const nextId = useRef<number>(1);
 
   // 操作しているアイテムID
-  const [action, setAction] = useState<EditorAction>({
-    type: "none"
-  });
+  const [action, setAction] = useState<EditorAction>({type: "none"});
+
+  // SVGの表示範囲を管理する
+  const [viewBox, setViewBox] = useState<ViewBox>({x: 0, y: 0, width: 800, height: 500});
 
   // 新しいRectangleを作る
   function addRectangle() {
@@ -208,7 +214,7 @@ function Simple2DEditor() {
   }
 
   // マウスの位置をSVG上の座標に変換する
-  function getSvgPoint(e: MouseEvent<SVGElement>) {
+  function getSvgPoint(e: MouseEvent<SVGElement> | WheelEvent<SVGSVGElement>) {
     // マウスイベントが発生したSVG要素を取得
     const svg = e.currentTarget.ownerSVGElement
       ?? (e.currentTarget as SVGSVGElement);
@@ -224,6 +230,41 @@ function Simple2DEditor() {
     return point.matrixTransform(matrix.inverse());
   }
 
+  // 描画エリアの拡大縮小
+  function handleWheel(e: WheelEvent<SVGSVGElement>) {
+    // マウスの位置をSVG座標に変換する
+    const point = getSvgPoint(e);
+
+    // 座標を取得できなかった場合は処理を終了する
+    if (!point) return;
+
+    // ホイールを上に回したら0.9倍、下に回したら1.1倍
+    // SVGは表示範囲を小さくすると図形が大きく表示される
+    const scale = e.deltaY < 0 ? 0.9 : 1.1;
+
+    // SVGの表示範囲（viewBox）を更新する
+    setViewBox((prev) => {
+      // 新しい表示範囲を返してstateを更新する
+      return {
+        // 現在のviewBoxの値をコピー
+        ...prev,
+
+        // 表示範囲の幅と高さに倍率を掛ける
+        // 例：800 × 0.9 = 720（拡大）
+        width: prev.width * scale,
+        height: prev.height * scale,
+
+        // マウスが指しているSVG座標を画面上の同じ位置に保つ
+        // そのために、表示範囲の左上座標を調整する
+        // 例：point.x = 200、prev.x = 0、scale = 0.9
+        //     200 - (200 - 0) × 0.9 = 20
+        //     表示範囲の左端が0から20に移動する
+        x: point.x - (point.x - prev.x) * scale,
+        y: point.y - (point.y - prev.y) * scale,
+      };
+    });
+  }
+
   return (
     <>
       <h2>Simple 2D Editor</h2>
@@ -236,10 +277,12 @@ function Simple2DEditor() {
       {/* 描画エリア */}
       <svg
         className = "editor-area"
-        viewBox = "0 0 800 500"
+        viewBox = {`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
         onMouseDown = {handleEditorMouseDown}
         onMouseMove = {handleMouseMove}
         onMouseUp = {handleMouseUp}
+        onMouseLeave = {handleMouseUp}
+        onWheel = {handleWheel}
       >
         {rectangles.map((rect) => (
           <g key = {rect.id}>
