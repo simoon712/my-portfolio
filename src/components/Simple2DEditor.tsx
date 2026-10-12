@@ -57,23 +57,25 @@ function Simple2DEditor() {
   }
 
   // アイテムをマウスダウンした時の処理
-  function handleMouseDown(
-    e: MouseEvent<HTMLDivElement>,
-    rect: Rectangle
-  ) {
+  function handleMouseDown(e: MouseEvent<SVGRectElement>, rect: Rectangle) {
+    // 描画エリアへのマウスイベント伝播を防ぐ
+    e.stopPropagation();
+
     // 選択したアイテムのIDを保存
     setSelectedId(rect.id);
 
-    // ドラッグするアイテムのIDを保存
-    setAction({ type: 'drag', id: rect.id });
+    // マウスのSVG座標を取得
+    const point = getSvgPoint(e);
 
-    // アイテムのブラウザ上の位置を取得
-    const rectangleRect = e.currentTarget.getBoundingClientRect();
+    if (!point) return;
 
-    // アイテムの左上から、クリックした位置までの距離を保存
+    // ドラッグ開始
+    setAction({ type: "drag", id: rect.id });
+
+    // 四角形の左上からマウス位置までの距離を保存
     setDragOffset({
-      x: e.clientX - rectangleRect.left,
-      y: e.clientY - rectangleRect.top
+      x: point.x - rect.x,
+      y: point.y - rect.y
     });
 
     // 選択したアイテム以外を残す
@@ -89,50 +91,46 @@ function Simple2DEditor() {
   }
 
   // アイテムをドラッグ・リサイズ中に更新する
-  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+  function handleMouseMove(e: MouseEvent<SVGSVGElement>) {
     // ドラッグ・リサイズ中でなければ何もしない
     if (action.type === 'none') return;
 
-    // 描画エリアのブラウザ上の位置を取得
-    const editorRect = e.currentTarget.getBoundingClientRect();
+    // ブラウザ上のマウス位置をSVG座標に変換
+    const point = getSvgPoint(e);
 
-    let newRectangles: Rectangle[] = rectangles;
+    // SVG座標を取得できなかった場合は終了
+    if (!point) return;
 
-    switch (action.type) {
-      // ドラッグ
-      case 'drag': {
-        newRectangles = rectangles.map((rect) => {
-          if (rect.id === action.id) {
-            return {
-              ...rect,
-              x: e.clientX - editorRect.left - dragOffset.x,
-              y: e.clientY - editorRect.top - dragOffset.y,
-            };
-          }
-          return rect;
-        });
-        break;
+    // Rectangleの配列を更新
+    const newRectangles = rectangles.map((rect) => {
+      // 操作対象ではないRectangleは変更しない
+      if (rect.id !== action.id) return rect;
+
+      // 現在の操作に応じて処理を切り替える
+      switch (action.type) {
+        case "drag":
+          // ドラッグ中はRectangleの位置を更新
+          return {
+            ...rect,
+            // マウス位置から掴んだ位置の差分を引く
+            x: point.x - dragOffset.x,
+            y: point.y - dragOffset.y
+          };
+
+        case "resize":
+          // リサイズ中はRectangleの幅と高さを更新
+          return {
+            ...rect,
+            // Rectangleの左上からマウス位置までの距離を計算
+            // 最小サイズは20に制限する
+            width: Math.max(20, point.x - rect.x),
+            height: Math.max(20, point.y - rect.y)
+          };
       }
+    });
 
-      // リサイズ
-      case 'resize': {
-        newRectangles = rectangles.map((rect) => {
-          if (rect.id === action.id) {
-            return {
-              ...rect,
-              width: Math.max(20, e.clientX - editorRect.left - rect.x),
-              height: Math.max(20, e.clientY - editorRect.top - rect.y)
-            };
-          }
-          return rect;
-        });
-        break;
-      }
-    }
-
-    // 更新したRectangleをstateに反映
+    // 更新した配列をReactのstateに反映
     setRectangles(newRectangles);
-
   }
 
   // ドラッグ・リサイズ終了
@@ -140,8 +138,8 @@ function Simple2DEditor() {
     setAction({ type: 'none' });
   }
 
-  // 描画エリアをマウスダウンした時の処理（選択解除）
-  function handleEditorMouseDown(e: MouseEvent<HTMLDivElement>) {
+  // 描画エリアの空白部分をクリックした時の処理
+  function handleEditorMouseDown(e: MouseEvent<SVGSVGElement>) {
     if (e.target === e.currentTarget) {
       setSelectedId(null);
     }
@@ -201,15 +199,29 @@ function Simple2DEditor() {
   }, []);
 
   // リサイズ開始
-  function handleResizeMouseDown(
-    e: MouseEvent<HTMLDivElement>,
-    rect: Rectangle
-  ) {
+  function handleResizeMouseDown(e: MouseEvent<SVGRectElement>, rect: Rectangle) {
     // 親のRectangleにマウスイベントを伝えない
     e.stopPropagation();
 
     // リサイズするアイテムのIDを保存
     setAction({ type: 'resize', id: rect.id });
+  }
+
+  // マウスの位置をSVG上の座標に変換する
+  function getSvgPoint(e: MouseEvent<SVGElement>) {
+    // マウスイベントが発生したSVG要素を取得
+    const svg = e.currentTarget.ownerSVGElement
+      ?? (e.currentTarget as SVGSVGElement);
+
+    // SVGの画面上の座標変換行列を取得
+    const matrix = svg.getScreenCTM();
+
+    if (!matrix) return null;
+
+    // ブラウザ上のマウス座標をSVG座標に変換
+    const point = new DOMPoint(e.clientX, e.clientY);
+
+    return point.matrixTransform(matrix.inverse());
   }
 
   return (
@@ -222,34 +234,42 @@ function Simple2DEditor() {
       </button>
 
       {/* 描画エリア */}
-      <div
+      <svg
         className = "editor-area"
+        viewBox = "0 0 800 500"
+        onMouseDown = {handleEditorMouseDown}
         onMouseMove = {handleMouseMove}
         onMouseUp = {handleMouseUp}
-        onMouseDown = {handleEditorMouseDown}
       >
         {rectangles.map((rect) => (
-          <div
-            key = {rect.id}
-            className = {selectedId === rect.id ? "rectangle selected" : "rectangle"}
-            style = {{
-              left:   rect.x,
-              top:    rect.y,
-              width:  rect.width,
-              height: rect.height,
-            }}
-            onMouseDown = {(e) => handleMouseDown(e, rect)}
-          >
+          <g key = {rect.id}>
+            {/* Rectangle本体 */}
+            <rect
+              x = {rect.x}
+              y = {rect.y}
+              width = {rect.width}
+              height = {rect.height}
+              fill = 'white'
+              stroke = {selectedId === rect.id ? "blue" : "#222"}
+              strokeWidth = {selectedId === rect.id ? 2 : 1}
+              onMouseDown = {(e) => handleMouseDown(e, rect)}
+            />
+            {/* 選択中のRectangleにリサイズハンドルを表示 */}
             {selectedId === rect.id && (
-              <div
-                className = "resize-handle"
+              <rect
+                x = {rect.x + rect.width - 5}
+                y = {rect.y + rect.height - 5}
+                width = {10}
+                height = {10}
+                fill = "blue"
+                style = {{ cursor: "nwse-resize" }}
                 onMouseDown = {(e) => handleResizeMouseDown(e, rect)}
-              >
-              </div>
+              />
             )}
-          </div>
+          </g>
         ))}
-      </div>
+        
+      </svg>
     </>
   );
 }
