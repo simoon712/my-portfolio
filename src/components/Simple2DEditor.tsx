@@ -44,15 +44,15 @@ function Simple2DEditor() {
   // 操作しているアイテムID
   const [action, setAction] = useState<EditorAction>({type: "none"});
 
-  // SVGの表示範囲を管理する
-  const [viewBox, setViewBox] = useState<ViewBox>({x: 0, y: 0, width: 800, height: 500});
+  // SVGの表示範囲を管理する（原点を画面中央にする）
+  const [viewBox, setViewBox] = useState<ViewBox>({x: -400, y: -250, width: 800, height: 500});
 
   // 新しいRectangleを作る
   function addRectangle() {
     const newRectangle: Rectangle = {
       id: nextId.current++,
-      x: 50,
-      y: 50,
+      x: 0,
+      y: 0,
       width: 100,
       height: 80,
     };
@@ -284,6 +284,53 @@ function Simple2DEditor() {
         onMouseLeave = {handleMouseUp}
         onWheel = {handleWheel}
       >
+        {/* 50単位ごとに薄いグレーの格子線を定義する */}
+        <defs>
+          <pattern
+            id = "editor-grid"
+            width = "50"
+            height = "50"
+            patternUnits = "userSpaceOnUse"
+          >
+            <path
+              d = "M 50 0 L 0 0 0 50"
+              fill = "none"
+              stroke = "#dddddd"
+              strokeWidth = "1"
+            />
+          </pattern>
+        </defs>
+
+        {/* 定義した格子線を描画エリア全体に表示する */}
+        <rect
+          x = {viewBox.x}
+          y = {viewBox.y}
+          width = {viewBox.width}
+          height = {viewBox.height}
+          fill = "url(#editor-grid)"
+          pointerEvents = "none"
+        />
+
+        {/* 原点(0, 0)を通るX軸 */}
+        <line
+          x1 = {viewBox.x}
+          y1 = {0}
+          x2 = {viewBox.x + viewBox.width}
+          y2 = {0}
+          stroke = "#888888"
+          strokeWidth = "1"
+        />
+
+        {/* 原点(0, 0)を通るY軸 */}
+        <line
+          x1 = {0}
+          y1 = {viewBox.y}
+          x2 = {0}
+          y2 = {viewBox.y + viewBox.height}
+          stroke = "#888888"
+          strokeWidth = "1"
+        />
+
         {rectangles.map((rect) => (
           <g key = {rect.id}>
             {/* Rectangle本体 */}
@@ -311,7 +358,6 @@ function Simple2DEditor() {
             )}
           </g>
         ))}
-        
       </svg>
     </>
   );
