@@ -18,7 +18,8 @@ type DragOffset = {
 type EditorAction =
   | { type: "none" }
   | { type: "drag"; id: number }
-  | { type: "resize"; id: number };
+  | { type: "resize"; id: number }
+  | { type: "pan" };
 
 // SVGの表示範囲
 type ViewBox = {
@@ -44,6 +45,12 @@ function Simple2DEditor() {
   // 操作しているアイテムID
   const [action, setAction] = useState<EditorAction>({type: "none"});
 
+  // Spaceキーが押されているかを管理する
+  const spacePressed = useRef<boolean>(false);
+
+  // パン操作を開始したときのマウス位置
+  const panStart = useRef<DragOffset>({ x: 0, y: 0 });
+
   // SVGの表示範囲を管理する（原点を画面中央にする）
   const [viewBox, setViewBox] = useState<ViewBox>({x: -400, y: -250, width: 800, height: 500});
 
@@ -64,6 +71,9 @@ function Simple2DEditor() {
 
   // アイテムをマウスダウンした時の処理
   function handleMouseDown(e: MouseEvent<SVGRectElement>, rect: Rectangle) {
+    // Spaceキーが押されている場合は親SVGに処理を任せる
+    if (spacePressed.current) return;
+
     // 描画エリアへのマウスイベント伝播を防ぐ
     e.stopPropagation();
 
@@ -100,6 +110,36 @@ function Simple2DEditor() {
   function handleMouseMove(e: MouseEvent<SVGSVGElement>) {
     // ドラッグ・リサイズ中でなければ何もしない
     if (action.type === 'none') return;
+
+    // パン操作中の場合
+    if (action.type === "pan") {
+      // マウスの移動量を取得（画面上のピクセル単位）
+      const dx = e.clientX - panStart.current.x;
+      const dy = e.clientY - panStart.current.y;
+
+      // SVGの画面上の大きさを取得
+      const svg = e.currentTarget;
+      const rect = svg.getBoundingClientRect();
+
+      // 画面上の移動量をSVG座標の移動量に変換
+      const moveX = dx * (viewBox.width / rect.width);
+      const moveY = dy * (viewBox.height / rect.height);
+
+      // 表示範囲を移動する
+      setViewBox((prev) => ({
+        ...prev,
+        x: prev.x - moveX,
+        y: prev.y - moveY
+      }));
+
+      // 次の移動量を計算するため、現在位置を保存
+      panStart.current = {
+        x: e.clientX,
+        y: e.clientY
+      };
+
+      return;
+    }
 
     // ブラウザ上のマウス位置をSVG座標に変換
     const point = getSvgPoint(e);
@@ -144,8 +184,25 @@ function Simple2DEditor() {
     setAction({ type: 'none' });
   }
 
-  // 描画エリアの空白部分をクリックした時の処理
-  function handleEditorMouseDown(e: MouseEvent<SVGSVGElement>) {
+  // 描画エリアをマウスダウンした時の処理
+  function handleEditorMouseDown(e: MouseEvent<SVGSVGElement>) { 
+
+    // Spaceキーが押されていたらパン操作を開始する
+    if (spacePressed.current) {
+
+      // ドラッグ開始時のマウス位置を保存
+      panStart.current = {
+        x: e.clientX,
+        y: e.clientY
+      };
+
+      // 現在の操作をパンに切り替える
+      setAction({ type: "pan" });
+
+      return;
+    }
+
+    // 空白部分をクリックした場合は選択解除
     if (e.target === e.currentTarget) {
       setSelectedId(null);
     }
@@ -171,14 +228,29 @@ function Simple2DEditor() {
     function handleKeyDown(e: KeyboardEvent) {
       // Deleteキーが押されたら選択中のアイテムを削除
       if (e.key === 'Delete') deleteSelectedRectangle();
+
+      // Spaceキーが押されたら記録する
+      if (e.code === "Space") {
+        spacePressed.current = true;
+        e.preventDefault();
+      }
+    }
+
+    // キーが離された時の処理
+    function handleKeyUp(e: KeyboardEvent) {
+      if (e.code === "Space") {
+        spacePressed.current = false;
+      }
     }
 
     // windowにキーボードイベントを登録
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
 
     // Effectが再実行・破棄される前にイベントを解除
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
 
     // 最新のrectanglesとselectedIdを使用するため
@@ -206,6 +278,9 @@ function Simple2DEditor() {
 
   // リサイズ開始
   function handleResizeMouseDown(e: MouseEvent<SVGRectElement>, rect: Rectangle) {
+    // Spaceキーが押されている場合は親SVGに処理を任せる
+    if (spacePressed.current) return;
+
     // 親のRectangleにマウスイベントを伝えない
     e.stopPropagation();
 

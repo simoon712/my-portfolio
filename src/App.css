@@ -213,4 +213,10 @@ h2 {
   .nav {
     margin-top: 15px;
   }
+
+  /* スマホでは描画エリアを画面幅に合わせた比率にする */
+  .editor-area {
+    height: auto;
+    aspect-ratio: 8 / 5;
+  }
 }
