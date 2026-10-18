@@ -51,8 +51,11 @@ function Simple2DEditor() {
   // パン操作を開始したときのマウス位置
   const panStart = useRef<DragOffset>({ x: 0, y: 0 });
 
+  // SVG要素を参照する
+  const svgRef = useRef<SVGSVGElement>(null);
+
   // SVGの表示範囲を管理する（原点を画面中央にする）
-  const [viewBox, setViewBox] = useState<ViewBox>({x: -400, y: -250, width: 800, height: 500});
+  const [viewBox, setViewBox] = useState<ViewBox>({x: -430, y: -250, width: 860, height: 500});
 
   // 新しいRectangleを作る
   function addRectangle() {
@@ -61,7 +64,7 @@ function Simple2DEditor() {
       x: 0,
       y: 0,
       width: 100,
-      height: 80,
+      height: 100,
     };
     setRectangles([
       ...rectangles,
@@ -276,6 +279,38 @@ function Simple2DEditor() {
     };
   }, []);
 
+  // SVGのサイズが変わったらviewBoxの横幅を調整する
+  useEffect(() => {
+    const svg = svgRef.current;
+
+    if (!svg) return;
+
+    const observer = new ResizeObserver(() => {
+      // SVGの実際の表示サイズを取得
+      const { width, height } = svg.getBoundingClientRect();
+
+      if (width === 0 || height === 0) return;
+
+      // 縦横比を維持しながら表示範囲を調整
+      setViewBox((prev) => {
+        const newWidth = prev.height * (width / height);
+
+        return {
+          ...prev,
+          x: prev.x + (prev.width - newWidth) / 2,
+          width: newWidth
+        };
+      });
+    });
+
+    observer.observe(svg);
+
+    // コンポーネントが破棄されたら監視を終了
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   // リサイズ開始
   function handleResizeMouseDown(e: MouseEvent<SVGRectElement>, rect: Rectangle) {
     // Spaceキーが押されている場合は親SVGに処理を任せる
@@ -351,8 +386,10 @@ function Simple2DEditor() {
 
       {/* 描画エリア */}
       <svg
+        ref = {svgRef}
         className = "editor-area"
         viewBox = {`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+        preserveAspectRatio = "xMidYMid meet"
         onMouseDown = {handleEditorMouseDown}
         onMouseMove = {handleMouseMove}
         onMouseUp = {handleMouseUp}
