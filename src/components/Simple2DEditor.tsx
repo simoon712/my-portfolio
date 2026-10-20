@@ -1,43 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, WheelEvent } from "react";
-
-type Rectangle = {
-  id: number;
-  type: "rectangle"; // 図形の種類
-  x:  number;
-  y:  number;
-  width: number;
-  height: number;
-};
-
-// エディタで扱うすべての図形の型
-type EditorItem = Rectangle;
-
-type DragOffset = {
-  x: number;
-  y: number;
-};
-
-// 現在の操作状態
-type EditorAction =
-  | { type: "none" }
-  | { type: "drag"; id: number }
-  | { type: "resize"; id: number }
-  | { type: "pan" };
-
-// SVGの表示範囲
-type ViewBox = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-type EditorHistory = {
-  past: EditorItem[][];    // 過去の図形データ
-  present: EditorItem[];   // 現在の図形データ
-  future: EditorItem[][];  // やり直し用の図形データ
-};
+import type { Rectangle, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory } from "./types";
 
 function Simple2DEditor() {
   // 図形の操作履歴を管理する
