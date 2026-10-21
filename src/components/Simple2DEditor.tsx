@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, WheelEvent } from "react";
 import type { Rectangle, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory } from "./types";
+import RectangleItem from "./RectangleItem";
 
 function Simple2DEditor() {
   // 図形の操作履歴を管理する
@@ -521,31 +522,13 @@ function Simple2DEditor() {
         />
 
         {items.map((item) => (
-          <g key = {item.id}>
-            {/* item本体 */}
-            <rect
-              x = {item.x}
-              y = {item.y}
-              width = {item.width}
-              height = {item.height}
-              fill = 'white'
-              stroke = {selectedId === item.id ? "blue" : "#222"}
-              strokeWidth = {selectedId === item.id ? 2 : 1}
-              onMouseDown = {(e) => handleMouseDown(e, item)}
-            />
-            {/* 選択中のitemにリサイズハンドルを表示 */}
-            {selectedId === item.id && (
-              <rect
-                x = {item.x + item.width - 5}
-                y = {item.y + item.height - 5}
-                width = {10}
-                height = {10}
-                fill = "blue"
-                style = {{ cursor: "nwse-resize" }}
-                onMouseDown = {(e) => handleResizeMouseDown(e, item)}
-              />
-            )}
-          </g>
+          <RectangleItem
+            key = {item.id}
+            item = {item}
+            selectedId = {selectedId}
+            onMouseDown = {handleMouseDown}
+            onResizeMouseDown = {handleResizeMouseDown}
+          />
         ))}
       </svg>
     </>
