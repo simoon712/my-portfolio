@@ -8,8 +8,18 @@ export type Rectangle = {
   height: number;
 };
 
+// 直線のデータを表す型
+export type Line = {
+  id: number;
+  type: "line";
+  x1: number; // 始点のX座標
+  y1: number; // 始点のY座標
+  x2: number; // 終点のX座標
+  y2: number; // 終点のY座標
+};
+
 // エディタで扱うすべての図形の型
-export type EditorItem = Rectangle;
+export type EditorItem = Rectangle | Line;
 
 // マウス操作時の位置や移動量を表す型
 export type DragOffset = {

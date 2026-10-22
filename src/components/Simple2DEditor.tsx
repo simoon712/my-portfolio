@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, WheelEvent } from "react";
-import type { Rectangle, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory } from "./types";
+import type { Rectangle, Line, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory } from "./types";
 import RectangleItem from "./RectangleItem";
+import LineItem from "./LineItem";
 
 function Simple2DEditor() {
   // 図形の操作履歴を管理する
@@ -56,6 +57,24 @@ function Simple2DEditor() {
       past: [...prev.past, prev.present], // 変更前の図形データを履歴に保存
       present: [...prev.present, newRectangle], // 新しい四角形を追加
       future: [] // 新しい操作をしたのでRedoの履歴を消去
+    }));
+  }
+
+  // 新しいLineを作る
+  function addLine() {
+    const newLine: Line = {
+      id: nextId.current++,
+      type: "line",
+      x1: 0,
+      y1: 0,
+      x2: 100,
+      y2: 100
+    };
+
+    setHistory((prev) => ({
+      past: [...prev.past, prev.present],
+      present: [...prev.present, newLine],
+      future: []
     }));
   }
 
@@ -127,6 +146,46 @@ function Simple2DEditor() {
     }));
   }
 
+  // 直線をマウスダウンした時の処理
+  function handleLineMouseDown(e: MouseEvent<SVGLineElement>, item: Line) {
+    // Spaceキーが押されている場合は親SVGに処理を任せる
+    if (spacePressed.current) return;
+
+    // 親SVGへのイベント伝播を防ぐ
+    e.stopPropagation();
+
+    // 選択した直線のIDを保存
+    setSelectedId(item.id);
+
+    // マウスのsvg座標を取得
+    const point = getSvgPoint(e);
+
+    if (!point) return;
+
+    // ドラッグ開始前の図形データを保存
+    actionStartItems.current = items;
+
+    // ドラッグ操作を開始
+    setAction({ type: "drag", id: item.id });
+
+    // 直線の始点からマウス位置までの距離を保存
+    setDragOffset({
+      x: point.x - item.x1,
+      y: point.y - item.y1
+    });
+
+    // 選択した直線以外のアイテムを残す
+    const otherItems = items.filter((otherItem) => {
+      return otherItem.id !== item.id;
+    });
+
+    // 選択した直線を配列の最後に移動して最前面にする
+    setHistory((prev) => ({
+      ...prev,
+      present: [...otherItems, item]
+    }));
+  }
+
   // アイテムをドラッグ・リサイズ中に更新する
   function handleMouseMove(e: MouseEvent<SVGSVGElement>) {
     // ドラッグ・リサイズ中でなければ何もしない
@@ -173,26 +232,30 @@ function Simple2DEditor() {
       // 操作対象ではないitemは変更しない
       if (item.id !== action.id) return item;
 
+      // 直線を操作する場合
+      if (item.type === "line") {
+        switch (action.type) {
+          case "drag":
+            // 直線全体を移動する
+            return moveLine(item, point, dragOffset);
+
+          case "resize":
+            // 始点を固定して終点だけを移動する
+            return resizeLine(item, point);
+        }
+      }
+
+      // 直線の処理が終わったので、ここからは四角形だけを処理する
+      if (item.type !== 'rectangle') return item;
+
       // 現在の操作に応じて処理を切り替える
       switch (action.type) {
         case "drag":
-          // ドラッグ中はitemの位置を更新
-          return {
-            ...item,
-            // マウス位置から掴んだ位置の差分を引く
-            x: point.x - dragOffset.x,
-            y: point.y - dragOffset.y
-          };
-
+          // 四角形の移動後の座標を計算する
+          return moveRectangle(item, point, dragOffset);
         case "resize":
-          // リサイズ中はitemの幅と高さを更新
-          return {
-            ...item,
-            // itemの左上からマウス位置までの距離を計算
-            // 最小サイズは20に制限する
-            width: Math.max(20, point.x - item.x),
-            height: Math.max(20, point.y - item.y)
-          };
+          // 四角形のリサイズの座標を計算する
+          return resizeRectangle(item, point);
       }
     });
 
@@ -201,6 +264,55 @@ function Simple2DEditor() {
       ...prev,
       present: newItems
     }));
+  }
+
+  // 四角形をドラッグしたときの座標を計算する
+  function moveRectangle(item: Rectangle, point: DragOffset, offset: DragOffset): Rectangle {
+    return {
+      ...item,
+      x: point.x - offset.x,
+      y: point.y - offset.y
+    };
+  }
+
+  // 直線をドラッグしたときの座標を計算する
+  function moveLine(item: Line, point: DragOffset, offset: DragOffset): Line {
+    // 新しい始点の座標を計算する
+    const newX1 = point.x - offset.x;
+    const newY1 = point.y - offset.y;
+
+    // 始点が移動した距離を計算する
+    const dx = newX1 - item.x1;
+    const dy = newY1 - item.y1;
+
+    return {
+      ...item,
+      x1: newX1,
+      y1: newY1,
+      x2: item.x2 + dx,
+      y2: item.y2 + dy
+    };
+  }
+
+  // 四角形をリサイズしたときの幅と高さを計算する
+  function resizeRectangle(item: Rectangle, point: DragOffset): Rectangle {
+    return {
+      ...item,
+      // 四角形の左上からマウス位置までの距離を計算する
+      // 最小サイズは20に制限する
+      width: Math.max(20, point.x - item.x),
+      height: Math.max(20, point.y - item.y)
+    };
+  }
+
+  // 直線の終点を移動して長さと角度を変更する
+  function resizeLine(item: Line, point: DragOffset): Line {
+    return {
+      ...item,
+      // 始点は固定し、終点だけをマウス位置に変更する
+      x2: point.x,
+      y2: point.y
+    };
   }
 
   // ドラッグ・リサイズ終了
@@ -385,6 +497,21 @@ function Simple2DEditor() {
     setAction({ type: 'resize', id: item.id });
   }
 
+  // 直線の終点をドラッグしてリサイズを開始する
+  function handleLineResizeMouseDown(e: MouseEvent<SVGCircleElement>, item: Line) {
+    // Spaceキーが押されている場合は親SVGに処理を任せる
+    if (spacePressed.current) return;
+
+    // 親SVGへのマウスイベント伝播を防ぐ
+    e.stopPropagation();
+
+    // リサイズ開始前の図形データを保存する
+    actionStartItems.current = items;
+
+    // 直線のリサイズ操作を開始する
+    setAction({ type: "resize", id: item.id });
+  }
+
   // マウスの位置をSVG上の座標に変換する
   function getSvgPoint(e: MouseEvent<SVGElement> | WheelEvent<SVGSVGElement>) {
     // マウスイベントが発生したSVG要素を取得
@@ -444,6 +571,13 @@ function Simple2DEditor() {
         onClick = {addRectangle}
       >
         Add Rectangle
+      </button>
+
+      {/* 直線を追加するボタン */}
+      <button
+        onClick = {addLine}
+      >
+        Add Line
       </button>
 
       {/* undoボタン */}
@@ -522,13 +656,23 @@ function Simple2DEditor() {
         />
 
         {items.map((item) => (
-          <RectangleItem
-            key = {item.id}
-            item = {item}
-            selectedId = {selectedId}
-            onMouseDown = {handleMouseDown}
-            onResizeMouseDown = {handleResizeMouseDown}
-          />
+          item.type === "rectangle" ? (
+            <RectangleItem
+              key = {item.id}
+              item = {item}
+              selectedId = {selectedId}
+              onMouseDown = {handleMouseDown}
+              onResizeMouseDown = {handleResizeMouseDown}
+            />
+          ) : (
+            <LineItem
+              key = {item.id}
+              item = {item}
+              selectedId = {selectedId}
+              onMouseDown = {handleLineMouseDown}
+              onResizeMouseDown = {handleLineResizeMouseDown}
+            />
+          )
         ))}
       </svg>
     </>
