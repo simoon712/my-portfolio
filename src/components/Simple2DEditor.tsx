@@ -257,6 +257,9 @@ function Simple2DEditor() {
           // 四角形のリサイズの座標を計算する
           return resizeRectangle(item, point);
       }
+
+      // どの操作にも該当しない場合は元の図形を返す
+      return item;
     });
 
     // ドラッグ・リサイズ中の図形データを更新する
