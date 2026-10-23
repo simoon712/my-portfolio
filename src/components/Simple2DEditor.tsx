@@ -239,9 +239,9 @@ function Simple2DEditor() {
             // 直線全体を移動する
             return moveLine(item, point, dragOffset);
 
-          case "resize":
-            // 始点を固定して終点だけを移動する
-            return resizeLine(item, point);
+          case "resize-line":
+            // 操作対象の端点を指定して直線をリサイズする
+            return resizeLine(item, point, action.endpoint);
         }
       }
 
@@ -306,13 +306,23 @@ function Simple2DEditor() {
   }
 
   // 直線の終点を移動して長さと角度を変更する
-  function resizeLine(item: Line, point: DragOffset): Line {
-    return {
-      ...item,
-      // 始点は固定し、終点だけをマウス位置に変更する
-      x2: point.x,
-      y2: point.y
-    };
+  function resizeLine(item: Line, point: DragOffset, endpoint: "start" | "end"): Line {
+    // 始点を操作している場合
+    if (endpoint === 'start') {
+      return {
+        ...item,
+        // 終点は固定し、始点だけをマウス位置に変更する
+        x1: point.x,
+        y1: point.y,
+      };
+    } else {
+      return {
+        ...item,
+        // 始点は固定し、終点だけをマウス位置に変更する
+        x2: point.x,
+        y2: point.y,
+      };
+    }
   }
 
   // ドラッグ・リサイズ終了
@@ -497,8 +507,8 @@ function Simple2DEditor() {
     setAction({ type: 'resize', id: item.id });
   }
 
-  // 直線の終点をドラッグしてリサイズを開始する
-  function handleLineResizeMouseDown(e: MouseEvent<SVGCircleElement>, item: Line) {
+  // 直線の端点をドラッグして位置変更を開始する
+  function handleLineResizeMouseDown(e: MouseEvent<SVGCircleElement>, item: Line, endpoint: 'start' | 'end') {
     // Spaceキーが押されている場合は親SVGに処理を任せる
     if (spacePressed.current) return;
 
@@ -508,8 +518,8 @@ function Simple2DEditor() {
     // リサイズ開始前の図形データを保存する
     actionStartItems.current = items;
 
-    // 直線のリサイズ操作を開始する
-    setAction({ type: "resize", id: item.id });
+    // 操作する端点を指定してリサイズを開始する
+    setAction({ type: "resize-line", id: item.id, endpoint: endpoint });
   }
 
   // マウスの位置をSVG上の座標に変換する

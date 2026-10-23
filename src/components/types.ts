@@ -32,7 +32,8 @@ export type EditorAction =
   | { type: "none" }
   | { type: "drag"; id: number }
   | { type: "resize"; id: number }
-  | { type: "pan" };
+  | { type: "pan" }
+  | { type: "resize-line"; id: number; endpoint: "start" | "end" };
 
 // SVGの表示範囲
 export type ViewBox = {

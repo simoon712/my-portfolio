@@ -24,6 +24,7 @@ function RectangleItem(props: RectangleItemProps) {
         stroke = {selectedId === item.id ? "blue" : "#222"}
         strokeWidth = {selectedId === item.id ? 2 : 1}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
+        style = {{ cursor: "move" }}
       />
 
       {/* 選択中のitemにリサイズハンドルを表示 */}

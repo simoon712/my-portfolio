@@ -6,8 +6,8 @@ type LineItemProps = {
   item: Line;
   selectedId: number | null;
   onMouseDown: (e: MouseEvent<SVGLineElement>, item: Line) => void;
-  // 直線の終点をドラッグしてリサイズを開始する
-  onResizeMouseDown: (e: MouseEvent<SVGCircleElement>, item: Line) => void;
+  // 直線をドラッグしてリサイズを開始する
+  onResizeMouseDown: (e: MouseEvent<SVGCircleElement>, item: Line, endpoint: 'start' | 'end') => void;
 };
 
 function LineItem(props: LineItemProps) {
@@ -24,18 +24,32 @@ function LineItem(props: LineItemProps) {
         stroke = {selectedId === item.id ? "blue" : "#222"}
         strokeWidth = {selectedId === item.id ? 3 : 2}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
+        style = {{ cursor: "move" }}
       />
 
-      {/* 選択中の直線の終点にハンドルを表示 */}
+      {/* 選択中の直線の両端にハンドルを表示 */}
       {selectedId === item.id && (
-        <circle
-          cx = {item.x2}
-          cy = {item.y2}
-          r = {5}
-          fill = "blue"
-          style = {{ cursor: "nwse-resize" }}
-          onMouseDown = {(e) => props.onResizeMouseDown(e, item)}
-        />
+        <>
+          {/* 始点のハンドル */}
+          <circle
+            cx = {item.x1}
+            cy = {item.y1}
+            r = {5}
+            fill = "blue"
+            style = {{ cursor: "crosshair" }}
+            onMouseDown = {(e) => props.onResizeMouseDown(e, item, 'start')}
+          />
+
+          {/* 終点のハンドル */}
+          <circle
+            cx = {item.x2}
+            cy = {item.y2}
+            r = {5}
+            fill = "blue"
+            style = {{ cursor: "crosshair" }}
+            onMouseDown = {(e) => props.onResizeMouseDown(e, item, 'end')}
+          />
+        </>
       )}
     </g>
   );
