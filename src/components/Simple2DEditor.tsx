@@ -4,6 +4,7 @@ import type { Rectangle, Line, EditorItem, DragOffset, EditorAction, ViewBox, Ed
 import RectangleItem from "./RectangleItem";
 import LineItem from "./LineItem";
 import { openPrintDialog } from "./utils/print";
+import { offsetDuplicateItem } from "./utils/offset";
 
 function Simple2DEditor() {
   // 図形の操作履歴を管理する
@@ -54,11 +55,16 @@ function Simple2DEditor() {
       height: 100,
     };
 
-    setHistory((prev) => ({
-      past: [...prev.past, prev.present], // 変更前の図形データを履歴に保存
-      present: [...prev.present, newRectangle], // 新しい四角形を追加
-      future: [] // 新しい操作をしたのでRedoの履歴を消去
-    }));
+    setHistory((prev) => {
+      // 同じ四角形が存在する場合は座標をずらす
+      const adjustedRectangle = offsetDuplicateItem(newRectangle, prev.present);
+
+      return {
+        past: [...prev.past, prev.present], // 変更前の図形データを履歴に保存
+        present: [...prev.present, adjustedRectangle], // 座標を調整した四角形を追加
+        future: [] // 新しい操作をしたのでRedoの履歴を消去
+      };
+    });
   }
 
   // 新しいLineを作る
@@ -72,11 +78,17 @@ function Simple2DEditor() {
       y2: 100
     };
 
-    setHistory((prev) => ({
-      past: [...prev.past, prev.present],
-      present: [...prev.present, newLine],
-      future: []
-    }));
+    setHistory((prev) => {
+      // 同じ直線が存在する場合は座標をずらす
+      const adjustedLine = offsetDuplicateItem(newLine, prev.present);
+
+      return {
+        past: [...prev.past, prev.present],
+        present: [...prev.present, adjustedLine],
+        future: []
+      }
+
+    });
   }
 
   // ひとつ前の図形データに戻す
@@ -303,9 +315,9 @@ function Simple2DEditor() {
     return {
       ...item,
       // 四角形の左上からマウス位置までの距離を計算する
-      // 最小サイズは20に制限する
-      width: Math.max(20, point.x - item.x),
-      height: Math.max(20, point.y - item.y)
+      // 最小サイズは1に制限する
+      width: Math.max(1, point.x - item.x),
+      height: Math.max(1, point.y - item.y)
     };
   }
 
