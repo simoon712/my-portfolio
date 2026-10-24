@@ -20,7 +20,7 @@ function RectangleItem(props: RectangleItemProps) {
         y = {item.y}
         width = {item.width}
         height = {item.height}
-        fill = "white"
+        fill = "none"
         stroke = {selectedId === item.id ? "blue" : "#222"}
         strokeWidth = {selectedId === item.id ? 2 : 1}
         onMouseDown = {(e) => props.onMouseDown(e, item)}

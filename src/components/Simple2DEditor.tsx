@@ -3,6 +3,7 @@ import type { MouseEvent, WheelEvent } from "react";
 import type { Rectangle, Line, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory } from "./types";
 import RectangleItem from "./RectangleItem";
 import LineItem from "./LineItem";
+import { openPrintDialog } from "./utils/print";
 
 function Simple2DEditor() {
   // 図形の操作履歴を管理する
@@ -591,6 +592,14 @@ function Simple2DEditor() {
         onClick = {addLine}
       >
         Add Line
+      </button>
+
+      {/* 印刷ダイアログを開くボタン */}
+      <button
+        onClick = {() => openPrintDialog(items)}
+        disabled = {items.length === 0}
+      >
+        Print
       </button>
 
       {/* undoボタン */}
