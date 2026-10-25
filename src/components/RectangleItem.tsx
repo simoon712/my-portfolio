@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 // 四角形コンポーネントに渡すデータの型
 type RectangleItemProps = {
   item: Rectangle;
-  selectedId: number | null;
+  selectedId: string | null;
   onMouseDown: (e: MouseEvent<SVGRectElement>, item: Rectangle) => void;
   onResizeMouseDown: (e: MouseEvent<SVGRectElement>, item: Rectangle) => void;
 };
@@ -21,14 +21,14 @@ function RectangleItem(props: RectangleItemProps) {
         width = {item.width}
         height = {item.height}
         fill = "none"
-        stroke = {selectedId === item.id ? "blue" : "#222"}
-        strokeWidth = {selectedId === item.id ? 2 : 1}
+        stroke = {selectedId === item.uuid ? "blue" : "#222"}
+        strokeWidth = {selectedId === item.uuid ? 2 : 1}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}
       />
 
       {/* 選択中のitemにリサイズハンドルを表示 */}
-      {selectedId === item.id && (
+      {selectedId === item.uuid && (
         <rect
           x = {item.x + item.width - 5}
           y = {item.y + item.height - 5}

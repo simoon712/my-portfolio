@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 // 直線コンポーネントに渡すデータの型
 type LineItemProps = {
   item: Line;
-  selectedId: number | null;
+  selectedId: string | null;
   onMouseDown: (e: MouseEvent<SVGLineElement>, item: Line) => void;
   // 直線をドラッグしてリサイズを開始する
   onResizeMouseDown: (e: MouseEvent<SVGCircleElement>, item: Line, endpoint: 'start' | 'end') => void;
@@ -21,14 +21,14 @@ function LineItem(props: LineItemProps) {
         y1 = {item.y1}
         x2 = {item.x2}
         y2 = {item.y2}
-        stroke = {selectedId === item.id ? "blue" : "#222"}
-        strokeWidth = {selectedId === item.id ? 3 : 2}
+        stroke = {selectedId === item.uuid ? "blue" : "#222"}
+        strokeWidth = {selectedId === item.uuid ? 3 : 2}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}
       />
 
       {/* 選択中の直線の両端にハンドルを表示 */}
-      {selectedId === item.id && (
+      {selectedId === item.uuid && (
         <>
           {/* 始点のハンドル */}
           <circle

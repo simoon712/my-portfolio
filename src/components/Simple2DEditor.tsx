@@ -5,6 +5,8 @@ import RectangleItem from "./RectangleItem";
 import LineItem from "./LineItem";
 import { openPrintDialog } from "./utils/print";
 import { offsetDuplicateItem } from "./utils/offset";
+import { exportJson } from "./utils/export";
+import { importJson } from "./utils/import";
 
 function Simple2DEditor() {
   // 図形の操作履歴を管理する
@@ -21,10 +23,7 @@ function Simple2DEditor() {
   const [dragOffset, setDragOffset] = useState<DragOffset>({x: 0, y: 0});
 
   // 選択中のアイテムID
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-
-  // 次に使用するアイテムID
-  const nextId = useRef<number>(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // 操作しているアイテムID
   const [action, setAction] = useState<EditorAction>({type: "none"});
@@ -41,13 +40,39 @@ function Simple2DEditor() {
   // SVG要素を参照する
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // JSONファイルを選択するinput要素を参照する
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // SVGの表示範囲を管理する（原点を画面中央にする）
   const [viewBox, setViewBox] = useState<ViewBox>({x: -430, y: -250, width: 860, height: 500});
+
+  // 選択したJSONファイルを読み込む
+  async function handleImportJson(file: File) {
+    try {
+      // JSONファイルを読み込み、図形データを取得する
+      const importedItems = await importJson(file);
+
+      // 読み込んだ図形データをエディターに反映する
+      setHistory((prev) => ({
+        past: [...prev.past, prev.present],
+        present: importedItems,
+        future: []
+      }));
+
+      // 図形の選択状態を解除する
+      setSelectedId(null);
+
+    } catch (error) {
+      // 読み込みに失敗した場合はエラーを表示する
+      console.error(error);
+      alert("JSONファイルの読み込みに失敗しました。");
+    }
+  }
 
   // 新しいRectangleを作る
   function addRectangle() {
     const newRectangle: Rectangle = {
-      id: nextId.current++,
+      uuid: crypto.randomUUID(),
       type: "rectangle", // 図形の種類
       x: 0,
       y: 0,
@@ -70,7 +95,7 @@ function Simple2DEditor() {
   // 新しいLineを作る
   function addLine() {
     const newLine: Line = {
-      id: nextId.current++,
+      uuid: crypto.randomUUID(),
       type: "line",
       x1: 0,
       y1: 0,
@@ -128,7 +153,7 @@ function Simple2DEditor() {
     e.stopPropagation();
 
     // 選択したアイテムのIDを保存
-    setSelectedId(item.id);
+    setSelectedId(item.uuid);
 
     // マウスのSVG座標を取得
     const point = getSvgPoint(e);
@@ -139,7 +164,7 @@ function Simple2DEditor() {
     actionStartItems.current = items;
 
     // ドラッグ開始
-    setAction({ type: "drag", id: item.id });
+    setAction({ type: "drag", uuid: item.uuid });
 
     // 四角形の左上からマウス位置までの距離を保存
     setDragOffset({
@@ -149,7 +174,7 @@ function Simple2DEditor() {
 
     // 選択したアイテム以外を残す
     const otherItems = items.filter((otherItem) => {
-      return otherItem.id !== item.id;
+      return otherItem.uuid !== item.uuid;
     });
 
     // 選択したアイテムを配列の最後に移動して最前面にする
@@ -168,7 +193,7 @@ function Simple2DEditor() {
     e.stopPropagation();
 
     // 選択した直線のIDを保存
-    setSelectedId(item.id);
+    setSelectedId(item.uuid);
 
     // マウスのsvg座標を取得
     const point = getSvgPoint(e);
@@ -179,7 +204,7 @@ function Simple2DEditor() {
     actionStartItems.current = items;
 
     // ドラッグ操作を開始
-    setAction({ type: "drag", id: item.id });
+    setAction({ type: "drag", uuid: item.uuid });
 
     // 直線の始点からマウス位置までの距離を保存
     setDragOffset({
@@ -189,7 +214,7 @@ function Simple2DEditor() {
 
     // 選択した直線以外のアイテムを残す
     const otherItems = items.filter((otherItem) => {
-      return otherItem.id !== item.id;
+      return otherItem.uuid !== item.uuid;
     });
 
     // 選択した直線を配列の最後に移動して最前面にする
@@ -243,7 +268,7 @@ function Simple2DEditor() {
     // アイテムの配列を更新
     const newItems = items.map((item) => {
       // 操作対象ではないitemは変更しない
-      if (item.id !== action.id) return item;
+      if (item.uuid !== action.uuid) return item;
 
       // 直線を操作する場合
       if (item.type === "line") {
@@ -391,7 +416,7 @@ function Simple2DEditor() {
 
     // 選択中のIDと一致しないアイテムだけを残す
     const newItems = items.filter((item) => {
-      return item.id !== selectedId;
+      return item.uuid !== selectedId;
     });
 
     // 削除前の状態を履歴に保存して、図形を削除する
@@ -520,7 +545,7 @@ function Simple2DEditor() {
     actionStartItems.current = items;
 
     // リサイズするアイテムのIDを保存
-    setAction({ type: 'resize', id: item.id });
+    setAction({ type: 'resize', uuid: item.uuid });
   }
 
   // 直線の端点をドラッグして位置変更を開始する
@@ -535,7 +560,7 @@ function Simple2DEditor() {
     actionStartItems.current = items;
 
     // 操作する端点を指定してリサイズを開始する
-    setAction({ type: "resize-line", id: item.id, endpoint: endpoint });
+    setAction({ type: "resize-line", uuid: item.uuid, endpoint: endpoint });
   }
 
   // マウスの位置をSVG上の座標に変換する
@@ -614,6 +639,41 @@ function Simple2DEditor() {
         Print
       </button>
 
+      {/* JSONファイルを保存するボタン */}
+      <button
+        onClick = {() => exportJson(items)}
+        disabled = {items.length === 0}
+      >
+        Export
+      </button>
+
+      {/* JSONファイルをインポートするボタン */}
+      <button
+        onClick = {() => fileInputRef.current?.click()}
+      >
+        Import
+      </button>
+
+      {/* JSONファイルを選択するための非表示input */}
+      <input
+        type = "file"
+        accept = ".json,application/json"
+        ref = {fileInputRef}
+        style = {{ display: "none" }}
+        onChange = {(e) => {
+          // 選択されたファイルを取得する
+          const file = e.target.files?.[0];
+
+          // ファイルが選択されなかった場合は何もしない
+          if (!file) return;
+
+          // JSONファイルを読み込む
+          void handleImportJson(file);
+
+          // 同じファイルを再度選択できるようにする
+          e.target.value = "";
+        }}
+/>
       {/* undoボタン */}
       <button
         onClick = {undo}
@@ -692,7 +752,7 @@ function Simple2DEditor() {
         {items.map((item) => (
           item.type === "rectangle" ? (
             <RectangleItem
-              key = {item.id}
+              key = {item.uuid}
               item = {item}
               selectedId = {selectedId}
               onMouseDown = {handleMouseDown}
@@ -700,7 +760,7 @@ function Simple2DEditor() {
             />
           ) : (
             <LineItem
-              key = {item.id}
+              key = {item.uuid}
               item = {item}
               selectedId = {selectedId}
               onMouseDown = {handleLineMouseDown}

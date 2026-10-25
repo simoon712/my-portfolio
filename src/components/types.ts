@@ -1,6 +1,6 @@
 // 四角形の定義
 export type Rectangle = {
-  id: number;
+  uuid: string;
   type: "rectangle"; // 図形の種類
   x:  number;
   y:  number;
@@ -10,7 +10,7 @@ export type Rectangle = {
 
 // 直線のデータを表す型
 export type Line = {
-  id: number;
+  uuid: string;
   type: "line";
   x1: number; // 始点のX座標
   y1: number; // 始点のY座標
@@ -30,10 +30,10 @@ export type DragOffset = {
 // 現在の操作状態
 export type EditorAction =
   | { type: "none" }
-  | { type: "drag"; id: number }
-  | { type: "resize"; id: number }
+  | { type: "drag"; uuid: string }
+  | { type: "resize"; uuid: string }
   | { type: "pan" }
-  | { type: "resize-line"; id: number; endpoint: "start" | "end" };
+  | { type: "resize-line"; uuid: string; endpoint: "start" | "end" };
 
 // SVGの表示範囲
 export type ViewBox = {
