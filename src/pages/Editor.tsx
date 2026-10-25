@@ -1,9 +1,9 @@
-import Simple2DEditor from '../components/Simple2DEditor';
+import DrawingEditor from '../components/DrawingEditor';
 
 function Editor() {
   return (
     <main>
-      <Simple2DEditor />
+      <DrawingEditor />
     </main>
   );
 }

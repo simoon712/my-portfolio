@@ -8,7 +8,7 @@ import { offsetDuplicateItem } from "./utils/offset";
 import { exportJson } from "./utils/export";
 import { importJson } from "./utils/import";
 
-function Simple2DEditor() {
+function DrawingEditor() {
   // 図形の操作履歴を管理する
   const [history, setHistory] = useState<EditorHistory>({
     past: [],
@@ -617,18 +617,20 @@ function Simple2DEditor() {
 
   return (
     <>
-      <h2>Simple 2D Editor</h2>
+      <h2>Drawing Editor</h2>
       <button
         onClick = {addRectangle}
       >
-        Add Rectangle
+        {/* Add Rectangle */}
+        □
       </button>
 
       {/* 直線を追加するボタン */}
       <button
         onClick = {addLine}
       >
-        Add Line
+        {/* Add Line */}
+        /
       </button>
 
       {/* 印刷ダイアログを開くボタン */}
@@ -636,7 +638,8 @@ function Simple2DEditor() {
         onClick = {() => openPrintDialog(items)}
         disabled = {items.length === 0}
       >
-        Print
+        {/* Print */}
+        印刷
       </button>
 
       {/* JSONファイルを保存するボタン */}
@@ -644,14 +647,16 @@ function Simple2DEditor() {
         onClick = {() => exportJson(items)}
         disabled = {items.length === 0}
       >
-        Export
+        {/* Export */}
+        保存
       </button>
 
       {/* JSONファイルをインポートするボタン */}
       <button
         onClick = {() => fileInputRef.current?.click()}
       >
-        Import
+        {/* Import */}
+        開く
       </button>
 
       {/* JSONファイルを選択するための非表示input */}
@@ -772,4 +777,4 @@ function Simple2DEditor() {
     </>
   );
 }
-export default Simple2DEditor;
+export default DrawingEditor;

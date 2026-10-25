@@ -38,12 +38,12 @@ const projects: ProjectData[] = [
   {
     id: 1,
     workType: 'personal',
-    titleEn: 'Simple 2D Editor',
-    titleJa: 'シンプルな2Dエディタ',
+    titleEn: 'Drawing Editor',
+    titleJa: '作図エディタ',
     descriptionEn: 'A simple 2D drawing application built with React and TypeScript.',
-    descriptionJa: 'ReactとTypeScriptを使って構築された、シンプルな2D描画アプリケーションです。',
+    descriptionJa: 'ReactとTypeScriptで開発した、シンプルな2D作図アプリケーションです。',
     technologies: ['TypeScript', 'React', 'HTML', 'CSS', 'Git'],
-    githubUrl: '',
+    githubUrl: 'https://github.com/simoon712/my-portfolio',
     projectUrl: '/my-portfolio/#/editor'
   },
   {
