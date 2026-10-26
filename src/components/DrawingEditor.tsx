@@ -22,8 +22,8 @@ function DrawingEditor() {
   // アイテムを掴んだ位置
   const [dragOffset, setDragOffset] = useState<DragOffset>({x: 0, y: 0});
 
-  // 選択中のアイテムID
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // 選択中の図形のUUIDを配列で管理する（複数選択に対応）
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // 操作しているアイテムID
   const [action, setAction] = useState<EditorAction>({type: "none"});
@@ -60,7 +60,7 @@ function DrawingEditor() {
       }));
 
       // 図形の選択状態を解除する
-      setSelectedId(null);
+      setSelectedIds([]);
 
     } catch (error) {
       // 読み込みに失敗した場合はエラーを表示する
@@ -152,8 +152,8 @@ function DrawingEditor() {
     // 描画エリアへのマウスイベント伝播を防ぐ
     e.stopPropagation();
 
-    // 選択したアイテムのIDを保存
-    setSelectedId(item.uuid);
+    // 選択状態を更新する
+    selectItem(item.uuid, e.shiftKey);
 
     // マウスのSVG座標を取得
     const point = getSvgPoint(e);
@@ -192,8 +192,8 @@ function DrawingEditor() {
     // 親SVGへのイベント伝播を防ぐ
     e.stopPropagation();
 
-    // 選択した直線のIDを保存
-    setSelectedId(item.uuid);
+    // 選択状態を更新する
+    selectItem(item.uuid, e.shiftKey);
 
     // マウスのsvg座標を取得
     const point = getSvgPoint(e);
@@ -222,6 +222,25 @@ function DrawingEditor() {
       ...prev,
       present: [...otherItems, item]
     }));
+  }
+
+  // 図形の選択状態を更新する（四角形・直線共通）
+  function selectItem(uuid: string, shiftKey: boolean) {
+    if (shiftKey) {
+      // Shiftキーが押されている場合は選択を追加・解除する
+      setSelectedIds((prev) => {
+        // 選択済みなら解除する
+        if (prev.includes(uuid)) {
+          return prev.filter((id) => id !== uuid);
+        }
+
+        // 未選択なら追加する
+        return [...prev, uuid];
+      });
+    } else {
+      // 通常クリックの場合は1つだけ選択する
+      setSelectedIds([uuid]);
+    }
   }
 
   // アイテムをドラッグ・リサイズ中に更新する
@@ -405,18 +424,18 @@ function DrawingEditor() {
 
     // 空白部分をクリックした場合は選択解除
     if (e.target === e.currentTarget) {
-      setSelectedId(null);
+      setSelectedIds([]);
     }
   }
 
   // 選択したアイテムの削除
   function deleteSelectedItem() {
     // 図形が選択されていなければ削除しない
-    if (selectedId === null) return;
+    if (selectedIds.length === 0) return;
 
     // 選択中のIDと一致しないアイテムだけを残す
     const newItems = items.filter((item) => {
-      return item.uuid !== selectedId;
+      return !selectedIds.includes(item.uuid);
     });
 
     // 削除前の状態を履歴に保存して、図形を削除する
@@ -427,7 +446,7 @@ function DrawingEditor() {
     }));
 
     // 削除後は選択状態を解除
-    setSelectedId(null);
+    setSelectedIds([]);
   }
 
   // キーボード操作を監視
@@ -480,7 +499,7 @@ function DrawingEditor() {
 
     // 最新のitemsとselectedIdを使用するため
     // どちらかが変わったらEffectを再実行
-  }, [items, selectedId]);
+  }, [items, selectedIds]);
 
   // 描画エリア外をクリックした場合に選択解除する
   useEffect(() => {
@@ -490,7 +509,7 @@ function DrawingEditor() {
 
       // 描画エリア外をクリックした場合
       if (editor && !editor.contains(e.target as Node)) {
-        setSelectedId(null);
+        setSelectedIds([]);
       }
     }
 
@@ -759,7 +778,7 @@ function DrawingEditor() {
             <RectangleItem
               key = {item.uuid}
               item = {item}
-              selectedId = {selectedId}
+              selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
               onMouseDown = {handleMouseDown}
               onResizeMouseDown = {handleResizeMouseDown}
             />
@@ -767,7 +786,7 @@ function DrawingEditor() {
             <LineItem
               key = {item.uuid}
               item = {item}
-              selectedId = {selectedId}
+              selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
               onMouseDown = {handleLineMouseDown}
               onResizeMouseDown = {handleLineResizeMouseDown}
             />
