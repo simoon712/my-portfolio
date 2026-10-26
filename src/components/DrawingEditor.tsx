@@ -19,8 +19,8 @@ function DrawingEditor() {
   // 現在の図形データを履歴から取得する
   const items = history.present;
 
-  // アイテムを掴んだ位置
-  const [dragOffset, setDragOffset] = useState<DragOffset>({x: 0, y: 0});
+  // ドラッグ開始時のマウス位置を保存する
+  const dragStartPoint = useRef<DragOffset>({ x: 0, y: 0 });
 
   // 選択中の図形のUUIDを配列で管理する（複数選択に対応）
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -145,7 +145,7 @@ function DrawingEditor() {
   }
 
   // アイテムをマウスダウンした時の処理
-  function handleMouseDown(e: MouseEvent<SVGRectElement>, item: Rectangle) {
+  function handleMouseDown(e: MouseEvent<SVGElement>, item: EditorItem) {
     // Spaceキーが押されている場合は親SVGに処理を任せる
     if (spacePressed.current) return;
 
@@ -160,17 +160,17 @@ function DrawingEditor() {
 
     if (!point) return;
 
+    // ドラッグ開始時のマウス位置を保存する
+    dragStartPoint.current = {
+      x: point.x,
+      y: point.y
+    };
+
     // ドラッグ開始前の図形データを一時保存する
     actionStartItems.current = items;
 
     // ドラッグ開始
     setAction({ type: "drag", uuid: item.uuid });
-
-    // 四角形の左上からマウス位置までの距離を保存
-    setDragOffset({
-      x: point.x - item.x,
-      y: point.y - item.y
-    });
 
     // 選択したアイテム以外を残す
     const otherItems = items.filter((otherItem) => {
@@ -184,45 +184,6 @@ function DrawingEditor() {
     }));
   }
 
-  // 直線をマウスダウンした時の処理
-  function handleLineMouseDown(e: MouseEvent<SVGLineElement>, item: Line) {
-    // Spaceキーが押されている場合は親SVGに処理を任せる
-    if (spacePressed.current) return;
-
-    // 親SVGへのイベント伝播を防ぐ
-    e.stopPropagation();
-
-    // 選択状態を更新する
-    selectItem(item.uuid, e.shiftKey);
-
-    // マウスのsvg座標を取得
-    const point = getSvgPoint(e);
-
-    if (!point) return;
-
-    // ドラッグ開始前の図形データを保存
-    actionStartItems.current = items;
-
-    // ドラッグ操作を開始
-    setAction({ type: "drag", uuid: item.uuid });
-
-    // 直線の始点からマウス位置までの距離を保存
-    setDragOffset({
-      x: point.x - item.x1,
-      y: point.y - item.y1
-    });
-
-    // 選択した直線以外のアイテムを残す
-    const otherItems = items.filter((otherItem) => {
-      return otherItem.uuid !== item.uuid;
-    });
-
-    // 選択した直線を配列の最後に移動して最前面にする
-    setHistory((prev) => ({
-      ...prev,
-      present: [...otherItems, item]
-    }));
-  }
 
   // 図形の選択状態を更新する（四角形・直線共通）
   function selectItem(uuid: string, shiftKey: boolean) {
@@ -238,120 +199,148 @@ function DrawingEditor() {
         return [...prev, uuid];
       });
     } else {
-      // 通常クリックの場合は1つだけ選択する
+      // 選択済みの図形をクリックした場合は複数選択を維持する
+      if (selectedIds.includes(uuid)) return;
+
+      // 未選択の図形をクリックした場合は1つだけ選択する
       setSelectedIds([uuid]);
     }
   }
 
-  // アイテムをドラッグ・リサイズ中に更新する
+  // マウス移動時の操作を振り分ける
   function handleMouseMove(e: MouseEvent<SVGSVGElement>) {
-    // ドラッグ・リサイズ中でなければ何もしない
-    if (action.type === 'none') return;
+    // 操作していない場合は何もしない
+    if (action.type === "none") return;
 
-    // パン操作中の場合
+    // パン操作中は画面を移動する
     if (action.type === "pan") {
-      // マウスの移動量を取得（画面上のピクセル単位）
-      const dx = e.clientX - panStart.current.x;
-      const dy = e.clientY - panStart.current.y;
-
-      // SVGの画面上の大きさを取得
-      const svg = e.currentTarget;
-      const rect = svg.getBoundingClientRect();
-
-      // 画面上の移動量をSVG座標の移動量に変換
-      const moveX = dx * (viewBox.width / rect.width);
-      const moveY = dy * (viewBox.height / rect.height);
-
-      // 表示範囲を移動する
-      setViewBox((prev) => ({
-        ...prev,
-        x: prev.x - moveX,
-        y: prev.y - moveY
-      }));
-
-      // 次の移動量を計算するため、現在位置を保存
-      panStart.current = {
-        x: e.clientX,
-        y: e.clientY
-      };
-
+      handlePan(e);
       return;
     }
 
-    // ブラウザ上のマウス位置をSVG座標に変換
-    const point = getSvgPoint(e);
+    // ドラッグ・リサイズ中は図形を更新する
+    handleItemMove(e);
+  }
 
-    // SVG座標を取得できなかった場合は終了
+  // Spaceキーを押しながらマウスを動かしたときの画面移動
+  function handlePan(e: MouseEvent<SVGSVGElement>) {
+    // マウスの移動量を取得する
+    const dx = e.clientX - panStart.current.x;
+    const dy = e.clientY - panStart.current.y;
+
+    // マウスの移動量をSVG座標に変換する
+    const rect = e.currentTarget.getBoundingClientRect();
+    const moveX = dx * (viewBox.width / rect.width);
+    const moveY = dy * (viewBox.height / rect.height);
+
+    // SVGの表示範囲を移動する
+    setViewBox((prev) => ({
+      ...prev,
+      x: prev.x - moveX,
+      y: prev.y - moveY
+    }));
+
+    // 次回の移動量を計算するために現在位置を保存する
+    panStart.current = {
+      x: e.clientX,
+      y: e.clientY
+    };
+  }
+
+  // 操作対象の図形を判定し、種類に応じた更新処理を呼び出す
+  function updateItem(item: EditorItem, point: DragOffset, dx: number, dy: number): EditorItem {
+    // ドラッグ中は選択中の図形だけを操作する
+    if (action.type === "drag") {
+      if (!selectedIds.includes(item.uuid)) return item;
+    }
+
+    // リサイズ中は操作対象の図形だけを操作する
+    if (action.type === "resize" || action.type === "resize-line") {
+      if (item.uuid !== action.uuid) return item;
+    }
+
+    // 直線の更新処理
+    if (item.type === "line") {
+      return updateLine(item, point, dx, dy);
+    }
+
+    // 四角形の更新処理
+    return updateRectangle(item, point, dx, dy);
+  }
+
+  // 図形のドラッグ・リサイズ中に座標を更新する
+  function handleItemMove(e: MouseEvent<SVGSVGElement>) {
+    // マウスの位置をSVG座標に変換する
+    const point = getSvgPoint(e);
     if (!point) return;
 
-    // アイテムの配列を更新
+    // ドラッグ開始位置からの移動量を計算する
+    const dx = point.x - dragStartPoint.current.x;
+    const dy = point.y - dragStartPoint.current.y;
+
+    // 操作対象の図形を更新する
     const newItems = items.map((item) => {
-      // 操作対象ではないitemは変更しない
-      if (item.uuid !== action.uuid) return item;
-
-      // 直線を操作する場合
-      if (item.type === "line") {
-        switch (action.type) {
-          case "drag":
-            // 直線全体を移動する
-            return moveLine(item, point, dragOffset);
-
-          case "resize-line":
-            // 操作対象の端点を指定して直線をリサイズする
-            return resizeLine(item, point, action.endpoint);
-        }
-      }
-
-      // 直線の処理が終わったので、ここからは四角形だけを処理する
-      if (item.type !== 'rectangle') return item;
-
-      // 現在の操作に応じて処理を切り替える
-      switch (action.type) {
-        case "drag":
-          // 四角形の移動後の座標を計算する
-          return moveRectangle(item, point, dragOffset);
-        case "resize":
-          // 四角形のリサイズの座標を計算する
-          return resizeRectangle(item, point);
-      }
-
-      // どの操作にも該当しない場合は元の図形を返す
-      return item;
+      // 各図形の更新処理を呼び出す
+      return updateItem(item, point, dx, dy);
     });
 
-    // ドラッグ・リサイズ中の図形データを更新する
+    // 更新した図形データを反映する
     setHistory((prev) => ({
       ...prev,
       present: newItems
     }));
   }
 
-  // 四角形をドラッグしたときの座標を計算する
-  function moveRectangle(item: Rectangle, point: DragOffset, offset: DragOffset): Rectangle {
-    return {
-      ...item,
-      x: point.x - offset.x,
-      y: point.y - offset.y
-    };
+  // 直線のドラッグ・リサイズ処理
+  function updateLine(item: Line, point: DragOffset, dx: number, dy: number): Line {
+    // ドラッグ中は開始前の座標を基準に移動する
+    if (action.type === "drag") {
+      const startItem = actionStartItems.current?.find((startItem) => {
+        return startItem.uuid === item.uuid;
+      });
+
+      if (!startItem || startItem.type !== "line") return item;
+
+      return {
+        ...item,
+        x1: startItem.x1 + dx,
+        y1: startItem.y1 + dy,
+        x2: startItem.x2 + dx,
+        y2: startItem.y2 + dy
+      };
+    }
+
+    // 直線の始点または終点をリサイズする
+    if (action.type === "resize-line") {
+      return resizeLine(item, point, action.endpoint);
+    }
+
+    return item;
   }
 
-  // 直線をドラッグしたときの座標を計算する
-  function moveLine(item: Line, point: DragOffset, offset: DragOffset): Line {
-    // 新しい始点の座標を計算する
-    const newX1 = point.x - offset.x;
-    const newY1 = point.y - offset.y;
+  // 四角形のドラッグ・リサイズ処理
+  function updateRectangle(item: Rectangle, point: DragOffset, dx: number, dy: number): Rectangle {
+    // ドラッグ中は開始前の座標を基準に移動する
+    if (action.type === "drag") {
+      const startItem = actionStartItems.current?.find((startItem) => {
+        return startItem.uuid === item.uuid;
+      });
 
-    // 始点が移動した距離を計算する
-    const dx = newX1 - item.x1;
-    const dy = newY1 - item.y1;
+      if (!startItem || startItem.type !== "rectangle") return item;
 
-    return {
-      ...item,
-      x1: newX1,
-      y1: newY1,
-      x2: item.x2 + dx,
-      y2: item.y2 + dy
-    };
+      return {
+        ...item,
+        x: startItem.x + dx,
+        y: startItem.y + dy
+      };
+    }
+
+    // 四角形の幅と高さを変更する
+    if (action.type === "resize") {
+      return resizeRectangle(item, point);
+    }
+
+    return item;
   }
 
   // 四角形をリサイズしたときの幅と高さを計算する
@@ -787,7 +776,7 @@ function DrawingEditor() {
               key = {item.uuid}
               item = {item}
               selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
-              onMouseDown = {handleLineMouseDown}
+              onMouseDown = {handleMouseDown}
               onResizeMouseDown = {handleLineResizeMouseDown}
             />
           )
