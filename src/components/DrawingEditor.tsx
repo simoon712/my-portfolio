@@ -31,6 +31,9 @@ function DrawingEditor() {
   // ドラッグ・リサイズ開始前の図形データを一時保存する
   const actionStartItems = useRef<EditorItem[] | null>(null);
 
+  // コピーした図形を一時保存する
+  const copiedItems = useRef<EditorItem[]>([]);
+
   // Spaceキーが押されているかを管理する
   const spacePressed = useRef<boolean>(false);
 
@@ -465,6 +468,57 @@ function DrawingEditor() {
       ) {
         e.preventDefault(); // ブラウザ標準の動作を防ぐ
         redo();
+        return;
+      }
+
+      // Command + C（Mac）またはCtrl + Cで選択中の図形をコピーする
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c" && selectedIds.length > 0) {
+        e.preventDefault();
+
+        // 選択中の図形をコピーする
+        copiedItems.current = items.filter((item) => selectedIds.includes(item.uuid));
+
+        return;
+      }
+
+      // Command + V（Mac）またはCtrl + Vで図形を貼り付ける
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v" && copiedItems.current.length > 0) {
+        e.preventDefault();
+
+        // コピーした図形を少しずらし、新しいUUIDを設定する
+        const pastedItems = copiedItems.current.map((item) => {
+          if (item.type === "rectangle") {
+            return {
+              ...item,
+              uuid: crypto.randomUUID(),
+              x: item.x + 20,
+              y: item.y + 20
+            };
+          }
+
+          return {
+            ...item,
+            uuid: crypto.randomUUID(),
+            x1: item.x1 + 20,
+            y1: item.y1 + 20,
+            x2: item.x2 + 20,
+            y2: item.y2 + 20
+          };
+        });
+
+        // 貼り付けた図形を履歴に保存する
+        setHistory((prev) => ({
+          past: [...prev.past, prev.present],
+          present: [...prev.present, ...pastedItems],
+          future: []
+        }));
+
+        // 貼り付けた図形を選択状態にする
+        setSelectedIds(pastedItems.map((item) => item.uuid));
+
+        // 次回の貼り付けではさらに20ずらす
+        copiedItems.current = pastedItems;
+
         return;
       }
     }
