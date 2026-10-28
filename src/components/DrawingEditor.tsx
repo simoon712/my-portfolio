@@ -25,6 +25,12 @@ function DrawingEditor() {
   // 選択中の図形のUUIDを配列で管理する（複数選択に対応）
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // 範囲選択の開始位置と現在位置を管理する
+  const [selectionBox, setSelectionBox] = useState<{
+    start: DragOffset;
+    end: DragOffset;
+  } | null>(null);
+
   // 操作しているアイテムID
   const [action, setAction] = useState<EditorAction>({type: "none"});
 
@@ -212,6 +218,22 @@ function DrawingEditor() {
 
   // マウス移動時の操作を振り分ける
   function handleMouseMove(e: MouseEvent<SVGSVGElement>) {
+    // 範囲選択中は選択枠の終点を更新する
+    if (selectionBox) {
+      const point = getSvgPoint(e);
+      if (!point) return;
+
+      setSelectionBox((prev) => {
+        if (!prev) return null;
+
+        return {
+          ...prev,
+          end: { x: point.x, y: point.y }
+        };
+      });
+      return;
+    }
+
     // 操作していない場合は何もしない
     if (action.type === "none") return;
 
@@ -379,6 +401,12 @@ function DrawingEditor() {
 
   // ドラッグ・リサイズ終了
   function handleMouseUp() {
+    // 範囲選択中なら選択を確定して終了する
+    if (selectionBox) {
+      finishAreaSelection();
+      return;
+    }
+
     // 操作前と現在の図形データが異なる場合だけ履歴に保存する
     if (actionStartItems.current !== null && JSON.stringify(actionStartItems.current) !== JSON.stringify(items)) {
       const startItems = actionStartItems.current;
@@ -394,6 +422,47 @@ function DrawingEditor() {
 
     // 操作状態を解除する
     setAction({ type: 'none' });
+  }
+
+  // 範囲選択を確定して終了する
+  function finishAreaSelection() {
+    // 範囲選択中でなければ何もしない
+    if (!selectionBox) return;
+
+    // 選択範囲の上下左右を取得する
+    const left = Math.min(selectionBox.start.x, selectionBox.end.x);
+    const right = Math.max(selectionBox.start.x, selectionBox.end.x);
+    const top = Math.min(selectionBox.start.y, selectionBox.end.y);
+    const bottom = Math.max(selectionBox.start.y, selectionBox.end.y);
+
+    // 選択範囲に完全に入っている図形を取得する
+    const selectedItems = items.filter((item) => {
+      if (item.type === "rectangle") {
+        return (
+          item.x >= left &&
+          item.y >= top &&
+          item.x + item.width <= right &&
+          item.y + item.height <= bottom
+        );
+      }
+
+      return (
+        item.x1 >= left &&
+        item.x1 <= right &&
+        item.y1 >= top &&
+        item.y1 <= bottom &&
+        item.x2 >= left &&
+        item.x2 <= right &&
+        item.y2 >= top &&
+        item.y2 <= bottom
+      );
+    });
+
+    // 選択範囲内の図形を選択状態にする
+    setSelectedIds(selectedItems.map((item) => item.uuid));
+
+    // 選択枠を消す
+    setSelectionBox(null);
   }
 
   // 描画エリアをマウスダウンした時の処理
@@ -414,9 +483,20 @@ function DrawingEditor() {
       return;
     }
 
-    // 空白部分をクリックした場合は選択解除
+    // 空白部分をクリックした場合は範囲選択を開始する
     if (e.target === e.currentTarget) {
+      // 既存の選択状態を解除する
       setSelectedIds([]);
+
+      // マウスのSVG座標を取得する
+      const point = getSvgPoint(e);
+      if (!point) return;
+
+      // 範囲選択の開始位置を保存する
+      setSelectionBox({
+        start: { x: point.x, y: point.y },
+        end: { x: point.x, y: point.y }
+      });
     }
   }
 
@@ -815,6 +895,22 @@ function DrawingEditor() {
           stroke = "#888888"
           strokeWidth = "1"
         />
+
+        {/* ドラッグ中の範囲選択枠 */}
+        {selectionBox && (
+          <rect
+            x = {Math.min(selectionBox.start.x, selectionBox.end.x)}
+            y = {Math.min(selectionBox.start.y, selectionBox.end.y)}
+            width = {Math.abs(selectionBox.end.x - selectionBox.start.x)}
+            height = {Math.abs(selectionBox.end.y - selectionBox.start.y)}
+            fill = "#3b82f6"
+            fillOpacity = {0.1}
+            stroke = "#3b82f6"
+            strokeWidth = {1}
+            strokeDasharray = "5 5"
+            pointerEvents = "none"
+          />
+        )}
 
         {items.map((item) => (
           item.type === "rectangle" ? (
