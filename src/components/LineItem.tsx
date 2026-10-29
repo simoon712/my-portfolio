@@ -25,6 +25,7 @@ function LineItem(props: LineItemProps) {
         strokeWidth = {selectedId === item.uuid ? 3 : 2}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}
+        vectorEffect = "non-scaling-stroke"
       />
 
       {/* 選択中の直線の両端にハンドルを表示 */}

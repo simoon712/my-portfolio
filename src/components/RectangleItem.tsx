@@ -25,6 +25,7 @@ function RectangleItem(props: RectangleItemProps) {
         strokeWidth = {selectedId === item.uuid ? 2 : 1}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}
+        vectorEffect = "non-scaling-stroke"
       />
 
       {/* 選択中のitemにリサイズハンドルを表示 */}
@@ -36,6 +37,7 @@ function RectangleItem(props: RectangleItemProps) {
           height = {10}
           fill = "blue"
           style = {{ cursor: "nwse-resize" }}
+          vectorEffect = "non-scaling-stroke"
           onMouseDown = {(e) => props.onResizeMouseDown(e, item)}
         />
       )}

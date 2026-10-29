@@ -875,6 +875,7 @@ function DrawingEditor() {
               fill = "none"
               stroke = "#dddddd"
               strokeWidth = "1"
+              vectorEffect = "non-scaling-stroke"
             />
           </pattern>
         </defs>
@@ -897,6 +898,7 @@ function DrawingEditor() {
           y2 = {0}
           stroke = "#888888"
           strokeWidth = "1"
+          vectorEffect = "non-scaling-stroke"
         />
 
         {/* 原点(0, 0)を通るY軸 */}
@@ -907,6 +909,7 @@ function DrawingEditor() {
           y2 = {viewBox.y + viewBox.height}
           stroke = "#888888"
           strokeWidth = "1"
+          vectorEffect = "non-scaling-stroke"
         />
 
         {/* ドラッグ中の範囲選択枠 */}
