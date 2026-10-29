@@ -5,6 +5,7 @@ import type { MouseEvent } from "react";
 type RectangleItemProps = {
   item: Rectangle;
   selectedId: string | null;
+  zoomScale: number; // SVGのズーム倍率
   onMouseDown: (e: MouseEvent<SVGRectElement>, item: Rectangle) => void;
   onResizeMouseDown: (e: MouseEvent<SVGRectElement>, item: Rectangle) => void;
 };
@@ -12,6 +13,8 @@ type RectangleItemProps = {
 function RectangleItem(props: RectangleItemProps) {
   const item = props.item;
   const selectedId = props.selectedId;
+  // ズームしても画面上で10px角になるように調整する
+  const handleSize = 10 / props.zoomScale;
   return (
     <g>
       {/* 四角形本体 */}
@@ -31,10 +34,10 @@ function RectangleItem(props: RectangleItemProps) {
       {/* 選択中のitemにリサイズハンドルを表示 */}
       {selectedId === item.uuid && (
         <rect
-          x = {item.x + item.width - 5}
-          y = {item.y + item.height - 5}
-          width = {10}
-          height = {10}
+          x = {item.x + item.width - handleSize / 2}
+          y = {item.y + item.height - handleSize / 2}
+          width = {handleSize}
+          height = {handleSize}
           fill = "blue"
           style = {{ cursor: "nwse-resize" }}
           vectorEffect = "non-scaling-stroke"

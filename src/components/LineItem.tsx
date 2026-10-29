@@ -5,6 +5,7 @@ import type { MouseEvent } from "react";
 type LineItemProps = {
   item: Line;
   selectedId: string | null;
+  zoomScale: number; // SVGのズーム倍率
   onMouseDown: (e: MouseEvent<SVGLineElement>, item: Line) => void;
   // 直線をドラッグしてリサイズを開始する
   onResizeMouseDown: (e: MouseEvent<SVGCircleElement>, item: Line, endpoint: 'start' | 'end') => void;
@@ -14,6 +15,8 @@ function LineItem(props: LineItemProps) {
   const item = props.item;
   const selectedId = props.selectedId;
 
+  // ズームしても画面上で半径5pxになるように調整する
+  const handleRadius = 5 / props.zoomScale;
   return (
     <g>
       <line
@@ -35,7 +38,7 @@ function LineItem(props: LineItemProps) {
           <circle
             cx = {item.x1}
             cy = {item.y1}
-            r = {5}
+            r = {handleRadius}
             fill = "blue"
             style = {{ cursor: "crosshair" }}
             onMouseDown = {(e) => props.onResizeMouseDown(e, item, 'start')}
@@ -45,7 +48,7 @@ function LineItem(props: LineItemProps) {
           <circle
             cx = {item.x2}
             cy = {item.y2}
-            r = {5}
+            r = {handleRadius}
             fill = "blue"
             style = {{ cursor: "crosshair" }}
             onMouseDown = {(e) => props.onResizeMouseDown(e, item, 'end')}

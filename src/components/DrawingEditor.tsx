@@ -50,11 +50,17 @@ function DrawingEditor() {
   // SVG要素を参照する
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // SVGの画面上の幅を管理する
+  const [svgWidth, setSvgWidth] = useState<number>(0);
+
   // JSONファイルを選択するinput要素を参照する
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // SVGの表示範囲を管理する（原点を画面中央にする）
   const [viewBox, setViewBox] = useState<ViewBox>({x: -430, y: -250, width: 860, height: 500});
+
+  // SVGの表示幅からズーム倍率を計算する
+  const zoomScale = svgWidth > 0 ? svgWidth / viewBox.width : 1;
 
   // 選択したJSONファイルを読み込む
   async function handleImportJson(file: File) {
@@ -668,6 +674,9 @@ function DrawingEditor() {
 
       if (width === 0 || height === 0) return;
 
+      // SVGの表示幅を更新する
+      setSvgWidth(width);
+
       // 縦横比を維持しながら表示範囲を調整
       setViewBox((prev) => {
         const newWidth = prev.height * (width / height);
@@ -934,6 +943,7 @@ function DrawingEditor() {
               key = {item.uuid}
               item = {item}
               selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
+              zoomScale = {zoomScale}
               onMouseDown = {handleMouseDown}
               onResizeMouseDown = {handleResizeMouseDown}
             />
@@ -942,6 +952,7 @@ function DrawingEditor() {
               key = {item.uuid}
               item = {item}
               selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
+              zoomScale = {zoomScale}
               onMouseDown = {handleMouseDown}
               onResizeMouseDown = {handleLineResizeMouseDown}
             />
