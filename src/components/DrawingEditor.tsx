@@ -29,6 +29,7 @@ function DrawingEditor() {
   const [selectionBox, setSelectionBox] = useState<{
     start: DragOffset;
     end: DragOffset;
+    shiftKey: boolean;
   } | null>(null);
 
   // 操作しているアイテムID
@@ -458,8 +459,17 @@ function DrawingEditor() {
       );
     });
 
-    // 選択範囲内の図形を選択状態にする
-    setSelectedIds(selectedItems.map((item) => item.uuid));
+    // 範囲選択した図形のUUIDを取得する
+    const newIds = selectedItems.map((item) => item.uuid);
+
+    // Shiftキーを押していた場合は既存の選択に追加する
+    setSelectedIds((prev) => {
+      if (selectionBox.shiftKey) {
+        return Array.from(new Set([...prev, ...newIds]));
+      }
+
+      return newIds;
+    });
 
     // 選択枠を消す
     setSelectionBox(null);
@@ -485,8 +495,10 @@ function DrawingEditor() {
 
     // 空白部分をクリックした場合は範囲選択を開始する
     if (e.target === e.currentTarget) {
-      // 既存の選択状態を解除する
-      setSelectedIds([]);
+      // Shiftキーを押していない場合だけ選択状態を解除する
+      if (!e.shiftKey) {
+        setSelectedIds([]);
+      }
 
       // マウスのSVG座標を取得する
       const point = getSvgPoint(e);
@@ -495,7 +507,8 @@ function DrawingEditor() {
       // 範囲選択の開始位置を保存する
       setSelectionBox({
         start: { x: point.x, y: point.y },
-        end: { x: point.x, y: point.y }
+        end: { x: point.x, y: point.y },
+        shiftKey: e.shiftKey
       });
     }
   }
