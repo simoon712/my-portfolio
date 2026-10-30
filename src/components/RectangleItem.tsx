@@ -24,7 +24,7 @@ function RectangleItem(props: RectangleItemProps) {
         width = {item.width}
         height = {item.height}
         fill = "none"
-        stroke = {selectedId === item.uuid ? "blue" : "#222"}
+        stroke = {selectedId === item.uuid ? "blue" : item.stroke}
         strokeWidth = {selectedId === item.uuid ? 2 : 1}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}

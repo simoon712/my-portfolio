@@ -198,9 +198,43 @@ h2 {
   display: block;
   width: 100%;
   height: 500px;
+  box-sizing: border-box;
   border: 1px solid #ccc;
   background-color: white;
 }
+
+/* 描画エリアとメニューを重ねるための基準 */
+.editor-layout {
+  position: relative;
+  overflow: hidden;
+}
+
+/* メニューを描画エリアの右端に配置 */
+.editor-properties-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 220px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  background-color: white;
+  border-left: 1px solid #dddddd;
+  z-index: 10;
+
+  transform: translateX(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.3s ease, visibility 0.3s;
+}
+
+/* 図形を選択すると右からスライド */
+.editor-properties-panel.is-open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
 /* スマホの場合 */
 @media (max-width: 600px) {
   .header {

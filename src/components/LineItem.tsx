@@ -24,7 +24,7 @@ function LineItem(props: LineItemProps) {
         y1 = {item.y1}
         x2 = {item.x2}
         y2 = {item.y2}
-        stroke = {selectedId === item.uuid ? "blue" : "#222"}
+        stroke = {selectedId === item.uuid ? "blue" : item.stroke}
         strokeWidth = {selectedId === item.uuid ? 3 : 2}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}

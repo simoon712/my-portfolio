@@ -7,6 +7,7 @@ import { openPrintDialog } from "./utils/print";
 import { offsetDuplicateItem } from "./utils/offset";
 import { exportJson } from "./utils/export";
 import { importJson } from "./utils/import";
+import PropertiesPanel from "./PropertiesPanel";
 
 function DrawingEditor() {
   // 図形の操作履歴を管理する
@@ -62,6 +63,11 @@ function DrawingEditor() {
   // SVGの表示幅からズーム倍率を計算する
   const zoomScale = svgWidth > 0 ? svgWidth / viewBox.width : 1;
 
+  // 単体選択中の図形を取得する
+  const selectedItem = selectedIds.length === 1
+    ? items.find((item) => item.uuid === selectedIds[0])
+    : undefined;
+
   // 選択したJSONファイルを読み込む
   async function handleImportJson(file: File) {
     try {
@@ -94,6 +100,7 @@ function DrawingEditor() {
       y: 0,
       width: 100,
       height: 100,
+      stroke: "#000000",
     };
 
     setHistory((prev) => {
@@ -116,7 +123,8 @@ function DrawingEditor() {
       x1: 0,
       y1: 0,
       x2: 100,
-      y2: 100
+      y2: 100,
+      stroke: "#000000",
     };
 
     setHistory((prev) => {
@@ -643,13 +651,13 @@ function DrawingEditor() {
     // どちらかが変わったらEffectを再実行
   }, [items, selectedIds]);
 
-  // 描画エリア外をクリックした場合に選択解除する
+  // 描画エリアとプロパティパネルの外側をクリックした場合に選択解除する
   useEffect(() => {
     function handleWindowMouseDown(e: globalThis.MouseEvent) {
-      // 描画エリアを取得
-      const editor = document.querySelector(".editor-area");
+      // 描画エリアとプロパティパネルをまとめた要素を取得
+      const editor = document.querySelector(".editor-layout");
 
-      // 描画エリア外をクリックした場合
+      // 描画エリアとプロパティパネルの外側をクリックした場合
       if (editor && !editor.contains(e.target as Node)) {
         setSelectedIds([]);
       }
@@ -779,6 +787,21 @@ function DrawingEditor() {
     });
   }
 
+  // 選択中の図形の線色を一括変更する
+  function changeStroke(color: string) {
+    if (selectedIds.length === 0) return;
+
+    setHistory((prev) => ({
+      past: [...prev.past, prev.present],
+      present: prev.present.map((item) => (
+        selectedIds.includes(item.uuid)
+          ? { ...item, stroke: color }
+          : item
+      )),
+      future: []
+    }));
+  }
+
   return (
     <>
       <h2>Drawing Editor</h2>
@@ -842,7 +865,7 @@ function DrawingEditor() {
           // 同じファイルを再度選択できるようにする
           e.target.value = "";
         }}
-/>
+      />
       {/* undoボタン */}
       <button
         onClick = {undo}
@@ -859,106 +882,116 @@ function DrawingEditor() {
         →
       </button>
 
-      {/* 描画エリア */}
-      <svg
-        ref = {svgRef}
-        className = "editor-area"
-        viewBox = {`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
-        preserveAspectRatio = "xMidYMid meet"
-        onMouseDown = {handleEditorMouseDown}
-        onMouseMove = {handleMouseMove}
-        onMouseUp = {handleMouseUp}
-        onMouseLeave = {handleMouseUp}
-        onWheel = {handleWheel}
-      >
-        {/* 50単位ごとに薄いグレーの格子線を定義する */}
-        <defs>
-          <pattern
-            id = "editor-grid"
-            width = "50"
-            height = "50"
-            patternUnits = "userSpaceOnUse"
-          >
-            <path
-              d = "M 50 0 L 0 0 0 50"
-              fill = "none"
-              stroke = "#dddddd"
-              strokeWidth = "1"
-              vectorEffect = "non-scaling-stroke"
-            />
-          </pattern>
-        </defs>
+      {/* 描画エリアとプロパティパネルをまとめる */}
+      <div className = "editor-layout">
+        {/* 描画エリア */}
+        <svg
+          ref = {svgRef}
+          className = "editor-area"
+          viewBox = {`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+          preserveAspectRatio = "xMidYMid meet"
+          onMouseDown = {handleEditorMouseDown}
+          onMouseMove = {handleMouseMove}
+          onMouseUp = {handleMouseUp}
+          onMouseLeave = {handleMouseUp}
+          onWheel = {handleWheel}
+        >
+          {/* 50単位ごとに薄いグレーの格子線を定義する */}
+          <defs>
+            <pattern
+              id = "editor-grid"
+              width = "50"
+              height = "50"
+              patternUnits = "userSpaceOnUse"
+            >
+              <path
+                d = "M 50 0 L 0 0 0 50"
+                fill = "none"
+                stroke = "#dddddd"
+                strokeWidth = "1"
+                vectorEffect = "non-scaling-stroke"
+              />
+            </pattern>
+          </defs>
 
-        {/* 定義した格子線を描画エリア全体に表示する */}
-        <rect
-          x = {viewBox.x}
-          y = {viewBox.y}
-          width = {viewBox.width}
-          height = {viewBox.height}
-          fill = "url(#editor-grid)"
-          pointerEvents = "none"
-        />
-
-        {/* 原点(0, 0)を通るX軸 */}
-        <line
-          x1 = {viewBox.x}
-          y1 = {0}
-          x2 = {viewBox.x + viewBox.width}
-          y2 = {0}
-          stroke = "#888888"
-          strokeWidth = "1"
-          vectorEffect = "non-scaling-stroke"
-        />
-
-        {/* 原点(0, 0)を通るY軸 */}
-        <line
-          x1 = {0}
-          y1 = {viewBox.y}
-          x2 = {0}
-          y2 = {viewBox.y + viewBox.height}
-          stroke = "#888888"
-          strokeWidth = "1"
-          vectorEffect = "non-scaling-stroke"
-        />
-
-        {/* ドラッグ中の範囲選択枠 */}
-        {selectionBox && (
+          {/* 定義した格子線を描画エリア全体に表示する */}
           <rect
-            x = {Math.min(selectionBox.start.x, selectionBox.end.x)}
-            y = {Math.min(selectionBox.start.y, selectionBox.end.y)}
-            width = {Math.abs(selectionBox.end.x - selectionBox.start.x)}
-            height = {Math.abs(selectionBox.end.y - selectionBox.start.y)}
-            fill = "#3b82f6"
-            fillOpacity = {0.1}
-            stroke = "#3b82f6"
-            strokeWidth = {1}
-            strokeDasharray = "5 5"
+            x = {viewBox.x}
+            y = {viewBox.y}
+            width = {viewBox.width}
+            height = {viewBox.height}
+            fill = "url(#editor-grid)"
             pointerEvents = "none"
           />
-        )}
 
-        {items.map((item) => (
-          item.type === "rectangle" ? (
-            <RectangleItem
-              key = {item.uuid}
-              item = {item}
-              selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
-              zoomScale = {zoomScale}
-              onMouseDown = {handleMouseDown}
-              onResizeMouseDown = {handleResizeMouseDown}
+          {/* 原点(0, 0)を通るX軸 */}
+          <line
+            x1 = {viewBox.x}
+            y1 = {0}
+            x2 = {viewBox.x + viewBox.width}
+            y2 = {0}
+            stroke = "#888888"
+            strokeWidth = "1"
+            vectorEffect = "non-scaling-stroke"
+          />
+
+          {/* 原点(0, 0)を通るY軸 */}
+          <line
+            x1 = {0}
+            y1 = {viewBox.y}
+            x2 = {0}
+            y2 = {viewBox.y + viewBox.height}
+            stroke = "#888888"
+            strokeWidth = "1"
+            vectorEffect = "non-scaling-stroke"
+          />
+
+          {/* ドラッグ中の範囲選択枠 */}
+          {selectionBox && (
+            <rect
+              x = {Math.min(selectionBox.start.x, selectionBox.end.x)}
+              y = {Math.min(selectionBox.start.y, selectionBox.end.y)}
+              width = {Math.abs(selectionBox.end.x - selectionBox.start.x)}
+              height = {Math.abs(selectionBox.end.y - selectionBox.start.y)}
+              fill = "#3b82f6"
+              fillOpacity = {0.1}
+              stroke = "#3b82f6"
+              strokeWidth = {1}
+              strokeDasharray = "5 5"
+              pointerEvents = "none"
             />
-          ) : (
-            <LineItem
-              key = {item.uuid}
-              item = {item}
-              selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
-              zoomScale = {zoomScale}
-              onMouseDown = {handleMouseDown}
-              onResizeMouseDown = {handleLineResizeMouseDown}
-            />
-          )
-        ))}
-      </svg>
+          )}
+
+          {items.map((item) => (
+            item.type === "rectangle" ? (
+              <RectangleItem
+                key = {item.uuid}
+                item = {item}
+                selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
+                zoomScale = {zoomScale}
+                onMouseDown = {handleMouseDown}
+                onResizeMouseDown = {handleResizeMouseDown}
+              />
+            ) : (
+              <LineItem
+                key = {item.uuid}
+                item = {item}
+                selectedId = {selectedIds.includes(item.uuid) ? item.uuid : null}
+                zoomScale = {zoomScale}
+                onMouseDown = {handleMouseDown}
+                onResizeMouseDown = {handleLineResizeMouseDown}
+              />
+            )
+          ))}
+        </svg>
+
+        {/* 選択中の図形のプロパティパネル */}
+        <PropertiesPanel
+          selectedCount = {selectedIds.length}
+          stroke = {selectedItem?.stroke ?? "#000000"}
+          onStrokeChange = {changeStroke}
+        />
+      </div>
     </>
   );
 }
