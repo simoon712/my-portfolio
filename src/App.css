@@ -214,7 +214,7 @@ h2 {
   position: absolute;
   top: 0;
   right: 0;
-  width: 220px;
+  width: 240px;
   height: 100%;
   box-sizing: border-box;
   padding: 20px;
@@ -226,6 +226,9 @@ h2 {
   visibility: hidden;
   pointer-events: none;
   transition: transform 0.3s ease, visibility 0.3s;
+  /* 項目が増えた場合はパネル内をスクロールできるようにする */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* 図形を選択すると右からスライド */
@@ -233,6 +236,62 @@ h2 {
   transform: translateX(0);
   visibility: visible;
   pointer-events: auto;
+}
+
+
+/* プロパティパネルの項目を縦方向に配置する */
+.properties-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* プロパティパネルのタイトル */
+.properties-panel-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* 単体選択・複数選択の状態を表示する */
+.properties-panel-status {
+  margin: 0;
+  font-size: 16px;
+  color: #555;
+}
+
+/* プロパティのラベルと入力欄を縦に並べる */
+.property-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* プロパティ項目のラベル */
+.property-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* 線の色を変更するカラーピッカー */
+.property-color-input {
+  width: 72px;
+  height: 40px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* 線の太さを入力する数値欄 */
+.property-number-input {
+  width: 150px;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 /* スマホの場合 */

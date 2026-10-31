@@ -63,8 +63,8 @@ function DrawingEditor() {
   // SVGの表示幅からズーム倍率を計算する
   const zoomScale = svgWidth > 0 ? svgWidth / viewBox.width : 1;
 
-  // 単体選択中の図形を取得する
-  const selectedItem = selectedIds.length === 1
+  // 選択中の先頭の図形を取得する（複数選択にも対応）
+  const selectedItem = selectedIds.length > 0
     ? items.find((item) => item.uuid === selectedIds[0])
     : undefined;
 
@@ -101,6 +101,7 @@ function DrawingEditor() {
       width: 100,
       height: 100,
       stroke: "#000000",
+      strokeWidth: 2 // 線の太さ（初期値2px）
     };
 
     setHistory((prev) => {
@@ -125,6 +126,7 @@ function DrawingEditor() {
       x2: 100,
       y2: 100,
       stroke: "#000000",
+      strokeWidth: 2 // 線の太さ（初期値2px）
     };
 
     setHistory((prev) => {
@@ -802,6 +804,67 @@ function DrawingEditor() {
     }));
   }
 
+  // 選択中の図形の線の太さを一括変更する
+  function changeStrokeWidth(width: number) {
+    if (selectedIds.length === 0) return;
+
+    setHistory((prev) => ({
+      past: [...prev.past, prev.present],
+      present: prev.present.map((item) => (
+        selectedIds.includes(item.uuid)
+          ? { ...item, strokeWidth: width }
+          : item
+      )),
+      future: []
+    }));
+  }
+
+  // 単体選択中の四角形の座標・サイズを変更する
+  function changeRectangle(field: "x" | "y" | "width" | "height", value: number) {
+    // 単体選択以外では変更しない
+    if (selectedIds.length !== 1) return;
+
+    // 不正な数値を防ぐ
+    if (!Number.isFinite(value)) return;
+
+    // 図形の変更前データを履歴に保存する
+    setHistory((prev) => ({
+      past: [...prev.past, prev.present],
+
+      // 選択中の四角形だけを更新する
+      present: prev.present.map((item) => (
+        item.uuid === selectedIds[0] && item.type === "rectangle"
+          ? { ...item, [field]: value }
+          : item
+      )),
+
+      future: []
+    }));
+  }
+
+  // 単体選択中の直線の始点・終点座標を変更する
+  function changeLine(field: "x1" | "y1" | "x2" | "y2", value: number) {
+    // 単体選択以外では変更しない
+    if (selectedIds.length !== 1) return;
+
+    // 不正な数値を防ぐ
+    if (!Number.isFinite(value)) return;
+
+    // 変更前の図形データを履歴に保存する
+    setHistory((prev) => ({
+      past: [...prev.past, prev.present],
+
+      // 選択中の直線だけを更新する
+      present: prev.present.map((item) => (
+        item.uuid === selectedIds[0] && item.type === "line"
+          ? { ...item, [field]: value }
+          : item
+      )),
+
+      future: []
+    }));
+  }
+
   return (
     <>
       <h2>Drawing Editor</h2>
@@ -988,8 +1051,13 @@ function DrawingEditor() {
         {/* 選択中の図形のプロパティパネル */}
         <PropertiesPanel
           selectedCount = {selectedIds.length}
+          selectedItem = {selectedItem}
           stroke = {selectedItem?.stroke ?? "#000000"}
+          strokeWidth = {selectedItem?.strokeWidth ?? 2}
           onStrokeChange = {changeStroke}
+          onStrokeWidthChange = {changeStrokeWidth}
+          onRectangleChange = {changeRectangle}
+          onLineChange = {changeLine}
         />
       </div>
     </>

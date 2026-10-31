@@ -25,7 +25,7 @@ function RectangleItem(props: RectangleItemProps) {
         height = {item.height}
         fill = "none"
         stroke = {selectedId === item.uuid ? "blue" : item.stroke}
-        strokeWidth = {selectedId === item.uuid ? 2 : 1}
+        strokeWidth = {item.strokeWidth}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}
         vectorEffect = "non-scaling-stroke"

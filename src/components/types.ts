@@ -7,6 +7,7 @@ export type Rectangle = {
   width: number;
   height: number;
   stroke: string; // 線の色
+  strokeWidth: number; // 線の太さ
 };
 
 // 直線のデータを表す型
@@ -18,6 +19,7 @@ export type Line = {
   x2: number; // 終点のX座標
   y2: number; // 終点のY座標
   stroke: string; // 線の色
+  strokeWidth: number; // 線の太さ
 };
 
 // エディタで扱うすべての図形の型

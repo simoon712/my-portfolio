@@ -25,7 +25,7 @@ function LineItem(props: LineItemProps) {
         x2 = {item.x2}
         y2 = {item.y2}
         stroke = {selectedId === item.uuid ? "blue" : item.stroke}
-        strokeWidth = {selectedId === item.uuid ? 3 : 2}
+        strokeWidth = {item.strokeWidth}
         onMouseDown = {(e) => props.onMouseDown(e, item)}
         style = {{ cursor: "move" }}
         vectorEffect = "non-scaling-stroke"
