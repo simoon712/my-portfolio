@@ -1,5 +1,6 @@
 
 import type { Rectangle } from "./types";
+import NumberInput from "./NumberInput";
 
 type RectanglePropertiesProps = {
   item: Rectangle; // 編集する四角形のデータ
@@ -24,26 +25,11 @@ function RectangleProperties(props: RectanglePropertiesProps) {
           </label>
 
           {/* 数値入力で四角形の座標・サイズを変更する */}
-          <input
+          <NumberInput
             id = {`rectangle-${field}`}
-            className = "property-number-input"
-            type = "number"
-            step = {1}
-            min = {field === "width" || field === "height" ? 1 : undefined}
             value = {item[field]}
-            onChange = {(e) => {
-              // 入力された値を数値に変換する
-              const value = Number(e.target.value);
-
-              // 不正な数値は更新しない
-              if (!Number.isFinite(value) || e.target.value === "") return;
-
-              // 幅と高さは1以上に制限する
-              if ((field === "width" || field === "height") && value < 1) return;
-
-              // 選択中の四角形を更新する
-              props.onChange(field, value);
-            }}
+            min = {field === "width" || field === "height" ? 1 : undefined}
+            onChange = {(value) => props.onChange(field, value)}
           />
         </div>
       ))}

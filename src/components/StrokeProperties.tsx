@@ -1,3 +1,4 @@
+import NumberInput from "./NumberInput";
 
 type StrokePropertiesProps = {
   stroke: string; // 線の色
@@ -28,23 +29,14 @@ function StrokeProperties(props: StrokePropertiesProps) {
         <label className = "property-label" htmlFor = "stroke-width">
           線の太さ
         </label>
-        <input
+
+        {/* 線幅は1〜20pxの範囲で、入力確定時に変更する */}
+        <NumberInput
           id = "stroke-width"
-          className = "property-number-input"
-          type = "number"
+          value = {props.strokeWidth}
           min = {1}
           max = {20}
-          step = {1}
-          value = {props.strokeWidth}
-          onChange = {(e) => {
-            // 入力された値を数値に変換する
-            const width = Number(e.target.value);
-
-            // 1〜20pxの範囲の場合だけ変更する
-            if (width >= 1 && width <= 20) {
-              props.onStrokeWidthChange(width);
-            }
-          }}
+          onChange = {props.onStrokeWidthChange}
         />
       </div>
     </>

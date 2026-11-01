@@ -1,5 +1,6 @@
 
 import type { Line } from "./types";
+import NumberInput from "./NumberInput";
 
 type LinePropertiesProps = {
   item: Line; // 編集する直線のデータ
@@ -24,22 +25,10 @@ function LineProperties(props: LinePropertiesProps) {
           </label>
 
           {/* 数値入力で直線の始点・終点を変更する */}
-          <input
+          <NumberInput
             id = {`line-${field}`}
-            className = "property-number-input"
-            type = "number"
-            step = {1}
             value = {item[field]}
-            onChange = {(e) => {
-              // 入力された値を数値に変換する
-              const value = Number(e.target.value);
-
-              // 空欄や不正な数値では更新しない
-              if (!Number.isFinite(value) || e.target.value === "") return;
-
-              // 選択中の直線を更新する
-              props.onChange(field, value);
-            }}
+            onChange = {(value) => props.onChange(field, value)}
           />
         </div>
       ))}
