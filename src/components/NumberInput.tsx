@@ -9,16 +9,21 @@ type NumberInputProps = {
   onChange: (value: number) => void; // 確定した値を反映する処理
 };
 
+// 数値を小数点以下2桁までに整形する
+function formatNumber(value: number): string {
+  return String(Number(value.toFixed(2)));
+}
+
 function NumberInput(props: NumberInputProps) {
   // 入力途中の文字列を管理する
-  const [inputValue, setInputValue] = useState<string>(String(props.value));
+  const [inputValue, setInputValue] = useState<string>(formatNumber(props.value));
 
   // Escapeキーによるキャンセルかどうかを管理する
   const isCancelingRef = useRef(false);
 
   // 図形の値が外部から変更された場合は入力欄にも反映する
   useEffect(() => {
-    setInputValue(String(props.value));
+    setInputValue(formatNumber(props.value));
   }, [props.value]);
 
   // Enterキーまたはフォーカス解除時に値を確定する
@@ -26,13 +31,13 @@ function NumberInput(props: NumberInputProps) {
     // Escapeキーによるキャンセルの場合は変更しない
     if (isCancelingRef.current) {
       isCancelingRef.current = false;
-      setInputValue(String(props.value));
+      setInputValue(formatNumber(props.value));
       return;
     }
 
     // 空欄や数値以外の入力は元の値に戻す
     if (inputValue.trim() === "") {
-      setInputValue(String(props.value));
+      setInputValue(formatNumber(props.value));
       return;
     }
 
@@ -44,7 +49,7 @@ function NumberInput(props: NumberInputProps) {
       (props.min !== undefined && value < props.min) ||
       (props.max !== undefined && value > props.max)
     ) {
-      setInputValue(String(props.value));
+      setInputValue(formatNumber(props.value));
       return;
     }
 
@@ -69,7 +74,7 @@ function NumberInput(props: NumberInputProps) {
       isCancelingRef.current = true;
 
       // 入力欄を元の値に戻してフォーカスを外す
-      setInputValue(String(props.value));
+      setInputValue(formatNumber(props.value));
       e.currentTarget.blur();
     }
   }

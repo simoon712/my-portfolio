@@ -8,10 +8,13 @@ type StrokePropertiesProps = {
 };
 
 function StrokeProperties(props: StrokePropertiesProps) {
+
   return (
-    <>
+    // 線の色と太さを設定するメニュー
+    <div className = "stroke-properties">
+
       {/* 線の色を変更する */}
-      <div className = "property-group">
+      <div className = "stroke-property-row">
         <label className = "property-label" htmlFor = "stroke-color">
           線の色
         </label>
@@ -25,12 +28,10 @@ function StrokeProperties(props: StrokePropertiesProps) {
       </div>
 
       {/* 線の太さを変更する */}
-      <div className = "property-group">
+      <div className = "stroke-property-row">
         <label className = "property-label" htmlFor = "stroke-width">
           線の太さ
         </label>
-
-        {/* 線幅は1〜20pxの範囲で、入力確定時に変更する */}
         <NumberInput
           id = "stroke-width"
           value = {props.strokeWidth}
@@ -39,7 +40,8 @@ function StrokeProperties(props: StrokePropertiesProps) {
           onChange = {props.onStrokeWidthChange}
         />
       </div>
-    </>
+
+    </div>
   );
 }
 

@@ -12,11 +12,11 @@ function RectangleProperties(props: RectanglePropertiesProps) {
   const item = props.item;
 
   return (
-    <>
+    // 四角形の座標とサイズを2列で表示する
+    <div className = "property-grid">
       {/* 四角形の左上座標とサイズを変更する */}
       {(["x", "y", "width", "height"] as const).map((field) => (
         <div className = "property-group" key = {field}>
-
           {/* 入力項目の名前 */}
           <label className = "property-label" htmlFor = {`rectangle-${field}`}>
             {field === "x" ? "X座標" :
@@ -33,7 +33,7 @@ function RectangleProperties(props: RectanglePropertiesProps) {
           />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 

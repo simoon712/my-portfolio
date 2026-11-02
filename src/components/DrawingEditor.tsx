@@ -867,83 +867,203 @@ function DrawingEditor() {
 
   return (
     <>
+      {/* 描画エディタの見出し */}
       <h2>Drawing Editor</h2>
-      <button
-        onClick = {addRectangle}
-      >
-        {/* Add Rectangle */}
-        □
-      </button>
+      <div className = "editor-toolbar">
+        {/* 図形を追加するツール */}
+        <div className = "editor-toolbar-group">
+          {/* 四角形を追加するボタン */}
+          <button
+            onClick = {addRectangle}
+            title = "四角形を追加"
+            aria-label = "四角形を追加"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "1.8"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              <rect x = "4" y = "4" width = "16" height = "16" rx = "2" />
+            </svg>
+          </button>
 
-      {/* 直線を追加するボタン */}
-      <button
-        onClick = {addLine}
-      >
-        {/* Add Line */}
-        /
-      </button>
+          {/* 直線を追加するボタン */}
+          <button
+            onClick = {addLine}
+            title = "直線を追加"
+            aria-label = "直線を追加"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "1.8"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              <line x1 = "5" y1 = "19" x2 = "19" y2 = "5" />
+            </svg>
+          </button>
+        </div>
 
-      {/* 印刷ダイアログを開くボタン */}
-      <button
-        onClick = {() => openPrintDialog(items)}
-        disabled = {items.length === 0}
-      >
-        {/* Print */}
-        印刷
-      </button>
+        {/* ファイル操作 */}
+        <div className = "editor-toolbar-group">
+          {/* 印刷ダイアログを開くボタン */}
+          <button
+            onClick = {() => openPrintDialog(items)}
+            disabled = {items.length === 0}
+            title = "印刷"
+            aria-label = "印刷"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "1.8"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              <path d = "M6 9V3H18V9" />
+              <path d = "M6 18H4A2 2 0 0 1 2 16V11A2 2 0 0 1 4 9H20A2 2 0 0 1 22 11V16A2 2 0 0 1 20 18H18" />
+              <rect x = "6" y = "14" width = "12" height = "7" />
+            </svg>
+          </button>
 
-      {/* JSONファイルを保存するボタン */}
-      <button
-        onClick = {() => exportJson(items)}
-        disabled = {items.length === 0}
-      >
-        {/* Export */}
-        保存
-      </button>
+          {/* JSONファイルを保存するボタン */}
+          <button
+            onClick = {() => exportJson(items)}
+            disabled = {items.length === 0}
+            title = "保存"
+            aria-label = "保存"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "1.8"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              <path d = "M19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H16L21 8V19A2 2 0 0 1 19 21Z" />
+              <path d = "M7 3V9H15V3" />
+              <rect x = "7" y = "14" width = "10" height = "7" />
+            </svg>
+          </button>
 
-      {/* JSONファイルをインポートするボタン */}
-      <button
-        onClick = {() => fileInputRef.current?.click()}
-      >
-        {/* Import */}
-        開く
-      </button>
+          {/* JSONファイルを読み込むボタン */}
+          <button
+            onClick = {() => fileInputRef.current?.click()}
+            title = "開く"
+            aria-label = "開く"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "2.3"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              {/* 開いたフォルダを描画する */}
+              <path d = "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6A2 2 0 0 1 18.46 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l1.1 1.7A2 2 0 0 0 12.4 6H18a2 2 0 0 1 2 2v2" />
+            </svg>
+          </button>
 
-      {/* JSONファイルを選択するための非表示input */}
-      <input
-        type = "file"
-        accept = ".json,application/json"
-        ref = {fileInputRef}
-        style = {{ display: "none" }}
-        onChange = {(e) => {
-          // 選択されたファイルを取得する
-          const file = e.target.files?.[0];
+          {/* JSONファイルを選択するための非表示input */}
+          <input
+            type = "file"
+            accept = ".json,application/json"
+            ref = {fileInputRef}
+            style = {{ display: "none" }}
+            onChange = {(e) => {
+              // 選択されたファイルを取得する
+              const file = e.target.files?.[0];
 
-          // ファイルが選択されなかった場合は何もしない
-          if (!file) return;
+              // ファイルが選択されなかった場合は何もしない
+              if (!file) return;
 
-          // JSONファイルを読み込む
-          void handleImportJson(file);
+              // JSONファイルを読み込む
+              void handleImportJson(file);
 
-          // 同じファイルを再度選択できるようにする
-          e.target.value = "";
-        }}
-      />
-      {/* undoボタン */}
-      <button
-        onClick = {undo}
-        disabled = {history.past.length === 0}
-      >
-        ←
-      </button>
+              // 同じファイルを再度選択できるようにする
+              e.target.value = "";
+            }}
+          />
+        </div>
 
-      {/* redoボタン */}
-      <button
-        onClick = {redo}
-        disabled = {history.future.length === 0}
-      >
-        →
-      </button>
+        {/* 操作履歴 */}
+        <div className = "editor-toolbar-group">
+          {/* 操作を元に戻すボタン */}
+          <button
+            onClick = {undo}
+            disabled = {history.past.length === 0}
+            title = "元に戻す"
+            aria-label = "元に戻す"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "2"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              {/* 左向きの矢印 */}
+              <path d = "M9 5L4 10L9 15" />
+
+              {/* 矢印からつながるU字型の曲線 */}
+              <path d = "M4 10H15A5 5 0 0 1 15 20H12" />
+            </svg>
+          </button>
+
+          {/* 取り消した操作をやり直すボタン */}
+          <button
+            onClick = {redo}
+            disabled = {history.future.length === 0}
+            title = "やり直す"
+            aria-label = "やり直す"
+          >
+            <svg
+              width = "20"
+              height = "20"
+              viewBox = "0 0 24 24"
+              fill = "none"
+              stroke = "currentColor"
+              strokeWidth = "2"
+              strokeLinecap = "round"
+              strokeLinejoin = "round"
+              aria-hidden = "true"
+            >
+              {/* 右向きの矢印 */}
+              <path d = "M15 5L20 10L15 15" />
+
+              {/* 矢印からつながるU字型の曲線 */}
+              <path d = "M20 10H9A5 5 0 0 0 9 20H12" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
       {/* 描画エリアとプロパティパネルをまとめる */}
       <div className = "editor-layout">

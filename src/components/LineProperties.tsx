@@ -11,8 +11,10 @@ function LineProperties(props: LinePropertiesProps) {
   // 編集する直線のデータを取得する
   const item = props.item;
 
+
   return (
-    <>
+    // 直線の始点・終点座標を2列で表示する
+    <div className = "property-grid">
       {/* 直線の始点・終点の座標を変更する */}
       {(["x1", "y1", "x2", "y2"] as const).map((field) => (
         <div className = "property-group" key = {field}>
@@ -32,7 +34,7 @@ function LineProperties(props: LinePropertiesProps) {
           />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 

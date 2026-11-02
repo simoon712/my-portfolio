@@ -44,9 +44,15 @@ function PropertiesPanel(props: PropertiesPanelProps) {
               <div className = "property-group">
 
                 {/* 図形の種類を表示する */}
-                <p>
-                  種類：{props.selectedItem.type === "rectangle" ? "四角形" : "直線"}
-                </p>
+                <div className = "property-type-row">
+                  <span className = "property-type-label">
+                    種類
+                  </span>
+
+                  <span className = "property-type-value">
+                    {props.selectedItem.type === "rectangle" ? "四角形" : "直線"}
+                  </span>
+                </div>
 
                 {/* 四角形と直線で表示内容を切り替える */}
                 {rectangle ? (
