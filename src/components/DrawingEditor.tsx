@@ -8,6 +8,7 @@ import { offsetDuplicateItem } from "./utils/offset";
 import { exportJson } from "./utils/export";
 import { importJson } from "./utils/import";
 import PropertiesPanel from "./PropertiesPanel";
+import "./DrawingEditor.css";
 
 function DrawingEditor() {
   // 図形の操作履歴を管理する
@@ -1090,7 +1091,7 @@ function DrawingEditor() {
               <path
                 d = "M 50 0 L 0 0 0 50"
                 fill = "none"
-                stroke = "#dddddd"
+                stroke = "#edf0f4"
                 strokeWidth = "1"
                 vectorEffect = "non-scaling-stroke"
               />
@@ -1113,7 +1114,7 @@ function DrawingEditor() {
             y1 = {0}
             x2 = {viewBox.x + viewBox.width}
             y2 = {0}
-            stroke = "#888888"
+            stroke = "#aeb6c2"
             strokeWidth = "1"
             vectorEffect = "non-scaling-stroke"
           />
@@ -1124,7 +1125,7 @@ function DrawingEditor() {
             y1 = {viewBox.y}
             x2 = {0}
             y2 = {viewBox.y + viewBox.height}
-            stroke = "#888888"
+            stroke = "#aeb6c2"
             strokeWidth = "1"
             vectorEffect = "non-scaling-stroke"
           />

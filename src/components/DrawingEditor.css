@@ -1,0 +1,303 @@
+/* SVG描画エリア */
+.editor-area {
+  display: block;
+  width: 100%;
+
+  /* 画面の高さに合わせて描画エリアを広げる */
+  height: calc(100vh - 150px);
+  min-height: 500px;
+
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 12px;
+}
+
+/* 描画エリアとプロパティパネルを重ねるための基準 */
+.editor-layout {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+
+  /* 描画エリア全体に自然な影をつける */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* メニューを描画エリアの右端に配置 */
+.editor-properties-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 24px;
+
+  /* パネルの背景と境界線 */
+  background-color: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.04);
+  z-index: 10;
+
+  /* 右側からスライド表示 */
+  transform: translateX(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.3s ease, visibility 0.3s;
+
+  /* 内容が収まらない場合はスクロール */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 図形を選択すると右からスライド */
+.editor-properties-panel.is-open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+
+/* プロパティパネルの項目を縦方向に配置する */
+.properties-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* プロパティパネルのタイトル */
+.properties-panel-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+/* 単体選択・複数選択の状態を表示する */
+.properties-panel-status {
+  margin: 0;
+  font-size: 12px;
+  color: #777;
+}
+
+/* プロパティのラベルと入力欄を縦に並べる */
+.property-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* プロパティ項目のラベル */
+.property-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* 線の色を変更するカラーピッカー */
+.property-color-input {
+  width: 72px;
+  height: 40px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* 線の太さを入力する数値欄 */
+.property-number-input {
+  width: 150px;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* 描画エディタのツールバー */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+/* 描画エディタのツールバーボタン */
+.editor-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  /* ボタンの大きさを統一する */
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  /* 外観 */
+  border: 1px solid #e2e5e9;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #252a32;
+
+  /* 文字とアイコン */
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+
+  /* 操作時の表示 */
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* SVGアイコンの大きさを統一する */
+.editor-toolbar button svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+/* ボタンにマウスを重ねたとき */
+.editor-toolbar button:hover:not(:disabled) {
+  background-color: #f1f4f8;
+  border-color: #cbd2dc;
+}
+
+/* キーボード操作時のフォーカス表示 */
+.editor-toolbar button:focus-visible {
+  outline: 2px solid #326dff;
+  outline-offset: 2px;
+}
+
+/* ボタンを押しているとき */
+.editor-toolbar button:active:not(:disabled) {
+  background-color: #e7ecf4;
+}
+
+/* 無効化されているボタン */
+.editor-toolbar button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ツールバーのボタンを用途別にグループ化する */
+.editor-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* グループの間に区切り線を表示する */
+.editor-toolbar-group + .editor-toolbar-group {
+  border-left: 1px solid #d8dde5;
+  padding-left: 16px;
+}
+
+/* 座標・サイズの入力欄を2列に配置する */
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+/* 各入力項目がグリッドからはみ出さないようにする */
+.property-grid .property-group {
+  min-width: 0;
+}
+
+/* 2列表示では入力欄をセルの幅に合わせる */
+.property-grid .property-number-input {
+  width: 100%;
+}
+
+/* 座標・サイズのラベルをコンパクトにする */
+.property-grid .property-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* 線の色と太さをまとめる */
+.stroke-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ラベルと入力欄を横並びにする */
+.stroke-property-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* 線の設定項目のラベル */
+.stroke-property-row .property-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* 線の太さの入力欄 */
+.stroke-property-row .property-number-input {
+  width: 90px;
+}
+
+/* 線の色の入力欄 */
+.stroke-property-row .property-color-input {
+  width: 56px;
+  height: 34px;
+  border-radius: 6px;
+}
+
+/* 図形の種類を左右に配置する */
+.property-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 「種類」のラベル */
+.property-type-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* 図形の種類を表示する */
+.property-type-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Drawing Editorのタイトル */
+.editor-page h2 {
+  margin: 0 0 8px;
+  padding-bottom: 10px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* スマホでは描画エリアの高さを画面に合わせる */
+@media (max-width: 600px) {
+  .editor-area {
+    height: 65vh;
+    min-height: 350px;
+    aspect-ratio: auto;
+  }
+}
