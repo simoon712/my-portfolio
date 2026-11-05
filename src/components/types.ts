@@ -10,6 +10,17 @@ export type Rectangle = {
   strokeWidth: number; // 線の太さ
 };
 
+// 四角形のリサイズ方向を表す型
+export type ResizeDirection =
+  | "top-left"      // 左上
+  | "top"           // 上
+  | "top-right"     // 右上
+  | "right"         // 右
+  | "bottom-right"  // 右下
+  | "bottom"        // 下
+  | "bottom-left"   // 左下
+  | "left";         // 左
+
 // 直線のデータを表す型
 export type Line = {
   uuid: string;
@@ -35,7 +46,7 @@ export type DragOffset = {
 export type EditorAction =
   | { type: "none" }
   | { type: "drag"; uuid: string }
-  | { type: "resize"; uuid: string }
+  | { type: "resize"; uuid: string; direction: ResizeDirection }
   | { type: "pan" }
   | { type: "resize-line"; uuid: string; endpoint: "start" | "end" };
 

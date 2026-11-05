@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, WheelEvent } from "react";
-import type { Rectangle, Line, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory } from "./types";
+import type { Rectangle, Line, EditorItem, DragOffset, EditorAction, ViewBox, EditorHistory, ResizeDirection } from "./types";
 import RectangleItem from "./RectangleItem";
 import LineItem from "./LineItem";
 import { openPrintDialog } from "./utils/print";
@@ -380,20 +380,53 @@ function DrawingEditor() {
 
     // 四角形の幅と高さを変更する
     if (action.type === "resize") {
-      return resizeRectangle(item, point);
+      return resizeRectangle(item, point, action.direction);
     }
 
     return item;
   }
 
-  // 四角形をリサイズしたときの幅と高さを計算する
-  function resizeRectangle(item: Rectangle, point: DragOffset): Rectangle {
+  // 四角形を指定された方向からリサイズする
+  function resizeRectangle(
+    item: Rectangle,
+    point: DragOffset,
+    direction: ResizeDirection
+  ): Rectangle {
+    // リサイズ開始前の図形データを取得する
+    const startItem = actionStartItems.current?.find((startItem) => {
+      return startItem.uuid === item.uuid;
+    });
+
+    // 開始前の四角形が取得できなければ変更しない
+    if (!startItem || startItem.type !== "rectangle") return item;
+
+    // リサイズ開始前の四角形の端の位置を取得する
+    const left = startItem.x;
+    const right = startItem.x + startItem.width;
+    const top = startItem.y;
+    const bottom = startItem.y + startItem.height;
+
+    // 操作する方向を判定する
+    const moveLeft = direction.includes("left");
+    const moveRight = direction.includes("right");
+    const moveTop = direction.includes("top");
+    const moveBottom = direction.includes("bottom");
+
+    // 左右の座標を計算する（最小幅は1）
+    const newLeft = moveLeft ? Math.min(point.x, right - 1) : left;
+    const newRight = moveRight ? Math.max(point.x, left + 1) : right;
+
+    // 上下の座標を計算する（最小高さは1）
+    const newTop = moveTop ? Math.min(point.y, bottom - 1) : top;
+    const newBottom = moveBottom ? Math.max(point.y, top + 1) : bottom;
+
+    // 新しい座標とサイズを返す
     return {
       ...item,
-      // 四角形の左上からマウス位置までの距離を計算する
-      // 最小サイズは1に制限する
-      width: Math.max(1, point.x - item.x),
-      height: Math.max(1, point.y - item.y)
+      x: newLeft,
+      y: newTop,
+      width: newRight - newLeft,
+      height: newBottom - newTop
     };
   }
 
@@ -709,7 +742,7 @@ function DrawingEditor() {
   }, []);
 
   // リサイズ開始
-  function handleResizeMouseDown(e: MouseEvent<SVGRectElement>, item: Rectangle) {
+  function handleResizeMouseDown(e: MouseEvent<SVGRectElement>, item: Rectangle, direction: ResizeDirection = "bottom-right") {
     // Spaceキーが押されている場合は親SVGに処理を任せる
     if (spacePressed.current) return;
 
@@ -719,8 +752,12 @@ function DrawingEditor() {
     // リサイズ開始前の図形データを一時保存する
     actionStartItems.current = items;
 
-    // リサイズするアイテムのIDを保存
-    setAction({ type: 'resize', uuid: item.uuid });
+    // リサイズする図形のIDと操作方向を保存する
+    setAction({
+      type: "resize",
+      uuid: item.uuid,
+      direction: direction
+    });
   }
 
   // 直線の端点をドラッグして位置変更を開始する
