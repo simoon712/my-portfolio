@@ -1,75 +1,109 @@
-# React + TypeScript + Vite
+# Yukihiro Ikuta — Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ReactとTypeScriptを使用して制作した個人ポートフォリオサイトです。
 
-Currently, two official plugins are available:
+これまでの職務経歴や技術スキル、制作物を紹介しています。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+主な制作物として、WebCADの開発経験を活かしたブラウザ上で動作する2D図形編集アプリ「Drawing Editor」を実装しています。
 
-## React Compiler
+## 使用技術
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React
+- TypeScript
+- Vite
+- React Router
+- SVG
+- CSS
 
-## Expanding the ESLint configuration
+## 主な機能
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### ポートフォリオサイト
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- 自己紹介・職務経歴の表示
+- 技術スキル・制作物の紹介
+- 日本語・英語の表示切り替え
+- React Routerによるページ遷移
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Drawing Editor
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+React、TypeScript、SVGを使用した2D図形編集アプリです。
 
+**図形の作成・編集**
+- 四角形・直線の追加
+- 図形の単体選択・複数選択・範囲選択
+- ドラッグによる移動
+- 四角形の8方向リサイズ
+- 直線の始点・終点の変更
+- コピー・ペースト・削除
+
+**プロパティ編集**
+- 座標・サイズの数値入力
+- 線の色・太さの変更
+- 複数図形の線色・線幅の一括編集
+- Enterキー・フォーカス解除による数値確定
+- Escapeキーによる入力キャンセル
+
+**描画エリアの操作**
+- マウスホイールによる拡大・縮小
+- Spaceキー＋ドラッグによる画面移動
+- グリッド・X軸・Y軸の表示
+
+**履歴・ファイル操作**
+- Undo・Redo
+- JSON形式での保存・読み込み
+- 印刷
+
+## 実装で工夫した点
+
+### コンポーネント設計
+
+図形の描画、プロパティ編集、エディタの操作処理をコンポーネントごとに分離し、保守性と再利用性を意識して設計しました。
+
+### TypeScriptによる型管理
+
+四角形・直線のデータや操作状態を型で定義し、図形の種類に応じた処理を安全に実装しました。
+
+### Undo・Redoの履歴管理
+
+`past`、`present`、`future` の3つの状態を使用して、図形の編集履歴を管理しています。
+
+### SVG座標の管理
+
+マウス座標をSVG座標に変換することで、拡大・縮小した状態でも図形を操作できるようにしました。
+
+また、ズーム倍率に応じてリサイズハンドルの表示サイズを調整しています。
+
+### プロパティ編集の操作性
+
+数値の入力途中と確定後のデータを分けて管理し、1回の数値変更を1回のUndoで戻せるようにしています。
+
+## ローカル環境での実行
+
+Node.jsとnpmが必要です。
+
+```bash
+git clone <repository-url>
+cd my-portfolio
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+`<repository-url>` は実際のGitHubリポジトリのURLに置き換えてください。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ビルド
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm run build
 ```
+
+## デモ
+
+公開後にURLを追加予定です。
+
+## 制作者
+
+**Yukihiro Ikuta**
+
+フロントエンドエンジニア
+
+機械設計およびWebフロントエンド開発の実務経験を活かし、操作性と保守性を意識したUI開発に取り組んでいます。
